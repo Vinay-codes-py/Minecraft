@@ -1,1 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Voxel Engine</title>
+    <style>
+        /* Make the game take up the full iframe without scrollbars */
+        body { margin: 0; overflow: hidden; background: #87CEEB; font-family: sans-serif; }
+        
+        /* The UI blocker that shows before the user clicks to play */
+        #blocker {
+            position: absolute; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); z-index: 10;
+            display: flex; justify-content: center; align-items: center;
+        }
+        #instructions {
+            color: #ffffff; font-size: 20px; text-align: center; cursor: pointer;
+            background: rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Center crosshair for aiming at blocks */
+        #crosshair {
+            position: absolute; top: 50%; left: 50%; width: 12px; height: 12px;
+            background: rgba(255, 255, 255, 0.8); border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none; z-index: 5;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+    </style>
+    <!-- Import Three.js Engine and First Person Controls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+</head>
+<body>
+    <!-- Game UI -->
+    <div id="blocker">
+        <div id="instructions">
+            <span style="font-size:30px; font-weight:bold;">Click to Play</span><br/><br/>
+            W, A, S, D = Move<br/>SPACE = Jump<br/>LEFT CLICK = Break Block<br/>RIGHT CLICK = Place Block
+        </div>
+    </div>
+    <div id="crosshair"></div>
+
+    <script>
+        // ==========================================
+        // PART 1: SCENE, LIGHTING, AND WORLD GEN
+        // ==========================================
+
+        // 1. Setup the 3D Scene
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB); // Sky Blue background
+        scene.fog = new THREE.Fog(0x87CEEB, 10, 40);  // Adds depth fog to hide world edges
+
+        // 2. Setup the Camera (Player's Eyes)
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        // 3. Setup the WebGL Renderer
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; // Enable shadows for depth
+        document.body.appendChild(renderer.domElement);
+
+        // 4. Setup Lighting
+        // Ambient light lights up everything slightly so shadows aren't pitch black
+        const ambientLight = new THREE.AmbientLight(0xcccccc, 0.6);
+        scene.add(ambientLight);
+        
+        // Directional light acts like the Sun
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(50, 100, 50);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        // 5. Create Voxel Materials (Colors only - No Images!)
+        const dirtColor = new THREE.MeshStandardMaterial({ color: 0x6E4723, roughness: 1.0 });
+        const grassTopColor = new THREE.MeshStandardMaterial({ color: 0x557A2B, roughness: 0.9 });
+        const stoneColor = new THREE.MeshStandardMaterial({ color: 0x7A7A7A, roughness: 0.7, metalness: 0.1 });
+        
+        // A Grass block has a green top, but dirt sides and bottom
+        const grassMaterial = [
+            dirtColor, dirtColor,     // Right, Left sides
+            grassTopColor, dirtColor, // Top (Green), Bottom (Dirt)
+            dirtColor, dirtColor      // Front, Back sides
+        ];
+
+        // The base shape for all blocks
+        const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+        
+        // Array to store all blocks so we can collide with them and mine them
+        const objects = [];
+
+        // 6. Procedural World Generation
+        // This math generates rolling hills automatically
+        const worldSize = 25; // Creates a 50x50 block world
+        
+        for (let x = -worldSize; x < worldSize; x++) {
+            for (let z = -worldSize; z < worldSize; z++) {
+                
+                // Use sine and cosine waves to create smooth hills and valleys
+                const surfaceHeight = Math.floor(Math.sin(x / 6) * 2.5 + Math.cos(z / 5) * 2.5 + 4);
+                
+                // Stack blocks from y=0 up to the surface height
+                for (let y = 0; y <= surfaceHeight; y++) {
+                    let mesh;
+                    
+                    if (y === surfaceHeight) {
+                        mesh = new THREE.Mesh(boxGeo, grassMaterial); // Grass on top
+                    } else if (y > surfaceHeight - 3) {
+                        mesh = new THREE.Mesh(boxGeo, dirtColor);     // Dirt underneath
+                    } else {
+                        mesh = new THREE.Mesh(boxGeo, stoneColor);    // Stone/Iron deep down
+                    }
+                    
+                    mesh.position.set(x, y, z);
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    
+                    scene.add(mesh);
+                    objects.push(mesh); // Save to objects array for collisions
+                }
+            }
+        }
+
+        // // ==========================================
+                // ==========================================
+        // PART 2: PLAYER, PHYSICS, AND INTERACTION
+        // ==========================================
+
+        // 1. First Person Camera Controls
+        const controls = new THREE.PointerLockControls(camera, document.body);
+        const instructions = document.getElementById('instructions');
+        const blocker = document.getElementById('blocker');
+
+        // Hide UI and lock mouse when playing
+        instructions.addEventListener('click', () => controls.lock());
+        controls.addEventListener('lock', () => { blocker.style.display = 'none'; });
+        controls.addEventListener('unlock', () => { blocker.style.display = 'flex'; });
+
+        // Add camera to scene and spawn it high in the sky so you fall to the ground
+        scene.add(controls.getObject());
+        controls.getObject().position.set(0, 15, 0);
+
+        // 2. Minecraft-Style Player Dummy (Colors Only)
+        // Since we are in 1st person, you can't see your own body. 
+        // We will spawn a dummy character in front of you to show off the skin design!
+        const playerModel = new THREE.Group();
+        
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xC58C66 })); // Skin color
+        head.position.y = 1.6;
+        playerModel.add(head);
+        
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.25), new THREE.MeshStandardMaterial({ color: 0x00A8A8 })); // Cyan Shirt
+        torso.position.y = 1.0;
+        playerModel.add(torso);
+        
+        const legMaterial = new THREE.MeshStandardMaterial({ color: 0x2C3E50 }); // Blue Jeans
+        const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.7, 0.25), legMaterial);
+        leftLeg.position.set(-0.13, 0.35, 0);
+        const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.7, 0.25), legMaterial);
+        rightLeg.position.set(0.13, 0.35, 0);
+        playerModel.add(leftLeg);
+        playerModel.add(rightLeg);
+        
+        // Place the dummy player model in the world
+        playerModel.position.set(2, 6, -5); 
+        scene.add(playerModel);
+
+        // 3. Movement and Physics Variables
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, canJump = false;
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        
+        // Raycaster looking down for gravity/floor detection
+        const floorRaycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0), 0, 10);
+        
+        // Raycaster looking straight ahead for mining/building
+        const interactRaycaster = new THREE.Raycaster();
+
+        // Keyboard Input Listeners
+        document.addEventListener('keydown', (event) => {
+            switch (event.code) {
+                case 'KeyW': moveForward = true; break;
+                case 'KeyA': moveLeft = true; break;
+                case 'KeyS': moveBackward = true; break;
+                case 'KeyD': moveRight = true; break;
+                case 'Space': 
+                    if (canJump) { velocity.y += 12; canJump = false; } 
+                    break;
+            }
+        });
+        document.addEventListener('keyup', (event) => {
+            switch (event.code) {
+                case 'KeyW': moveForward = false; break;
+                case 'KeyA': moveLeft = false; break;
+                case 'KeyS': moveBackward = false; break;
+                case 'KeyD': moveRight = false; break;
+            }
+        });
+
+        // 4. Block Breaking and Placing Mechanics
+        document.addEventListener('mousedown', (event) => {
+            if (!controls.isLocked) return;
+            
+            // Aim exactly at the center of the screen (the crosshair)
+            interactRaycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+            const intersects = interactRaycaster.intersectObjects(objects);
+
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                
+                // Reach limit: You can't break blocks that are too far away (distance of 6 units max)
+                if (intersect.distance > 6) return;
+
+                if (event.button === 0) {
+                    // LEFT CLICK: BREAK BLOCK
+                    scene.remove(intersect.object);
+                    // Remove from our collision array so we can walk through where it used to be
+                    objects.splice(objects.indexOf(intersect.object), 1); 
+                } 
+                else if (event.button === 2) {
+                    // RIGHT CLICK: PLACE BLOCK
+                    // We generate a new grass block and snap it perfectly to the 3D grid
+                    const newBlock = new THREE.Mesh(boxGeo, grassMaterial);
+                    newBlock.position.copy(intersect.point).add(intersect.face.normal);
+                    newBlock.position.floor().addScalar(0.5); // Grid snapping math
+                    newBlock.castShadow = true;
+                    newBlock.receiveShadow = true;
+                    
+                    scene.add(newBlock);
+                    objects.push(newBlock);
+                }
+            }
+        });
+
+        // Fix camera if the user resizes their browser window
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 5. Main Game Loop (Gravity, Collisions, and Frames)
+        let prevTime = performance.now();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now();
+
+            if (controls.isLocked) {
+                // Time difference ensures the game runs at the same speed on fast and slow computers
+                const delta = (time - prevTime) / 1000;
+
+                // Apply Friction (slipping)
+                velocity.x -= velocity.x * 10.0 * delta;
+                velocity.z -= velocity.z * 10.0 * delta;
+                
+                // Apply Gravity (pulling down)
+                velocity.y -= 40.0 * delta; 
+
+                direction.z = Number(moveForward) - Number(moveBackward);
+                direction.x = Number(moveRight) - Number(moveLeft);
+                direction.normalize();
+
+                // Walk Speed
+                const speed = 50.0;
+                if (moveForward || moveBackward) velocity.z -= direction.z * speed * delta;
+                if (moveLeft || moveRight) velocity.x -= direction.x * speed * delta;
+
+                // Floor Collision Detection
+                floorRaycaster.ray.origin.copy(controls.getObject().position);
+                floorRaycaster.ray.origin.y -= 1.5; // Look down at the feet
+                const intersections = floorRaycaster.intersectObjects(objects);
+                const onObject = intersections.length > 0 && intersections[0].distance < 0.5;
+
+                if (onObject) {
+                    velocity.y = Math.max(0, velocity.y); // Stop falling
+                    canJump = true;                       // Allow jumping again
+                }
+
+                // Apply the calculated movements to the camera
+                controls.moveRight(-velocity.x * delta);
+                controls.moveForward(-velocity.z * delta);
+                controls.getObject().position.y += velocity.y * delta;
+
+                // Respawn mechanic: If you fall off the map into the void, teleport back to the sky
+                if (controls.getObject().position.y < -20) {
+                    velocity.y = 0;
+                    controls.getObject().position.set(0, 15, 0); 
+                    canJump = true;
+                }
+            }
+            prevTime = time;
+            renderer.render(scene, camera);
+        }
+        
+        // Start the game!
+        animate();
+
+        // // ==========================================
+
+    </script>
+</body>
+</html>
 
